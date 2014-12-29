@@ -1,0 +1,75 @@
+a, img {-webkit-touch-callout:none;}
+html, body {height:100%;}
+body {position:relative;overflow:hidden;-webkit-user-select:none;user-select:none;-ms-touch-action:none;}
+
+/*页面loading*/
+.mask {z-index:10;top:0;right:0;bottom:0;left:0;position:fixed;background:rgba(0, 0, 0, .35);}
+.mask-loading {top:0;right:0;bottom:0;left:0;position:absolute;margin:auto;display:block;width:100px;height:60px;line-height:60px;text-align:center;border-radius:10px;background:rgba(0, 0, 0, .9);font-style:normal;}
+.mask-loading:before {content:"加载中...";color:#fff;font-size:14px;}
+
+.ani {-webkit-animation:.3s ease-in-out;animation:.3s ease-in-out;}
+
+/*页面视图*/
+.page-view {top:0;left:0;position:absolute;width:100%;height:100%;overflow:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;}
+/*前进方向进入*/
+.page-view.enter {-webkit-transform:translateX(0);transform:translateX(0);}
+/*前进方向离开*/
+.page-view.leave {-webkit-transform:translateX(-100%);transform:translateX(-100%)}
+
+
+/*前进方向进入*/
+.slide.enter {-webkit-animation-name:slideinfromright;animation-name:slideinfromright;}
+/*以后退方向进入*/
+.slide.enter.reverse {-webkit-animation-name:slideinfromleft;animation-name:slideinfromleft;}
+/*前进方向离开*/
+.slide.leave {-webkit-animation-name:slideouttoleft;animation-name:slideouttoleft;}
+/*后退方向离开*/
+.slide.leave.reverse {-webkit-animation-name:slideouttoright;animation-name:slideouttoright;}
+
+/*初始化的时候 还是需要加上一点动画的 这样是为了触发animationend事件 */
+.ani.init {-webkit-animation-name:liter;-webkit-animation-duration:.1s;animation-name:liter;animation-duration:.1s;}
+
+@-webkit-keyframes liter {
+	from { -webkit-transform: translate3d(0, 0, 1px); }
+	to { -webkit-transform: translate3d(0, 0, 0); }
+}
+@keyframes liter {
+	from { transform: translate3d(0, 0, 1px); }
+	to { transform: translate3d(0, 0, 0); }
+}
+
+@-webkit-keyframes slideinfromright {
+	from { -webkit-transform: translateX(100%); }
+	to { -webkit-transform: translateX(0); }
+}
+@keyframes slideinfromright {
+	from { transform: translateX(100%); }
+	to { transform: translateX(0); }
+}
+
+@-webkit-keyframes slideinfromleft {
+	from { -webkit-transform: translateX(-100%); }
+	to { -webkit-transform: translateX(0); }
+}
+@keyframes slideinfromleft {
+	from { transform: translateX(-100%); }
+	to { transform: translateX(0); }
+}
+
+@-webkit-keyframes slideouttoleft {
+	from { -webkit-transform: translateX(0); }
+	to { -webkit-transform: translateX(-100%); }
+}
+@keyframes slideouttoleft {
+	from { transform: translateX(0); }
+	to { transform: translateX(-100%); }
+}
+
+@-webkit-keyframes slideouttoright {
+	from { -webkit-transform: translateX(0); }
+	to { -webkit-transform: translateX(100%); }
+}
+@keyframes slideouttoright {
+	from { transform: translateX(0); }
+	to { transform: translateX(100%); }
+}
