@@ -24,7 +24,6 @@
 		return url.replace(/#.*/, '');
 	};
 
-	var history = win.history;
 	var location = win.location;
 	var document = win.document;
 	var body = document.body;
@@ -314,7 +313,6 @@
       return el.nodeType === 1 && ClassList(el).contains(cls);
 		},
 
-		history: history,
 		location: location,
 		document: document,
 		body: body,

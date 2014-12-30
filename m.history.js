@@ -26,7 +26,19 @@
 		defBase = '/';
 	}
 
+	var history = win.history;
+	var agent = (win.navigator || {}).userAgent;
+	if (!agent) agent = '';
+	var android = parseInt((/android (\d+)/.exec(agent.toLowerCase()) || [])[1], 10);
+	if (isNaN(android)) android = undefined;
+	var boxee = /Boxee/i.test(agent);
+
+	var support = !!(history && history.pushState && history.replaceState && !(android < 4) && !boxee);
+
 	var History = {
+
+		/*是否支持*/
+		support: support,
 
 		/*是否已启动*/
 		_startd: false,
@@ -48,11 +60,13 @@
 			}
 			this._startd = true;
 
-			// 监听改变
-			win.addEventListener('popstate', this.onChange);
+			if (support) {
+				// 监听改变
+				win.addEventListener('popstate', this.onChange);
 
-			// 阻止 a
-			M.document.addEventListener('click', this.onDocClick);
+				// 阻止 a
+				M.document.addEventListener('click', this.onDocClick);
+			}
 
 			// 需要初始化一次当前的state
 			this.onChange();
