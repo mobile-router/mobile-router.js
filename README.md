@@ -25,7 +25,9 @@ M
 
 * `getTemplate`配置方法，如果带有参数，那么该参数就是得到模板字符串后的回调函数，一定要回调的；如果没有参数，直接返回模板字符串即可。这样做，主要是为了考虑异步获取（render）模板的场景。
 
-* `M.history`的默认的 base path 是页面中`base`元素的`href`的值，如果没有，则默认是`/`；也可以在`M.history.start()`时，传入。
+* `M.history`的默认的 base path 是页面中`base`元素的`href`的值，如果没有，则默认是`/`；也可以在`M.history.start()`时传入。
+
+* 对于[history](https://developer.mozilla.org/en-US/docs/Web/Guide/API/DOM/Manipulating_the_browser_history)、[window.onpopstate](https://developer.mozilla.org/en-US/docs/WindowEventHandlers.onpopstate)不支持或者支持不够好的浏览器来说，能够正常匹配对应`route`，也就是说能够正常调用`route`配置项中的`getTemplate`以及`callback`（`onDestroy`除外），其他功能都没有，点击链接直接刷新页面。这样就可以在不改变代码的情况下，适配了不支持的浏览器，但是可能会影响单个页面加载js的大小。
 
 ### 使用方法：
 
