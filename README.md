@@ -49,6 +49,7 @@ M.router.init([
 		path: '/c/:paramName',
 		cacheTemplate: false, // 针对于当前的route，是否缓存模板
 		getTemplate: function(cb) {
+			// 这里模拟异步得到模板内容
 			var that = this;
 			// that.params 参数信息
 			// that.query query信息
@@ -56,7 +57,7 @@ M.router.init([
 				cb('/c/' + that.params.paramName);
 			}, 200);
 		},
-		callback: function() {
+		callback: function(paramName) {
 			if (this.cached) return;
 			// 处理操作...
 		},
@@ -79,7 +80,7 @@ M.router.init([
 	/*有动画的话，动画的类型*/
 	aniForm: 'slide',
 
-	/*蒙层class*/
+	/*蒙层class 主要是显示loading时的蒙层*/
 	maskClass: 'mask',
 	/*显示loading*/
 	showLoading: true,
@@ -89,7 +90,7 @@ M.router.init([
 });
 
 // 也可以通过这种形式添加
-M.router.get('/ddd/{dddID:int}', function() {
+M.router.get('/ddd/{dddID:int}', function(dddID) {
 	// 这是 callback 回调
 }, {
 	cacheTemplate: true,
@@ -102,9 +103,11 @@ M.router.get('/ddd/{dddID:int}', function() {
 });
 
 /* 监听route change */
+/* routeChangeStart 是刚开始的时候被触发，此时还没有调用getTemplate得到模板内容 */
 M.router.on('routeChangeStart', function(currentRouteState) {
 	
 });
+/*已经完成动画切换（如有动画效果的话）显示出来之后触发*/
 M.router.on('routeChangeEnd', function(currentRouteState) {
 	
 });
