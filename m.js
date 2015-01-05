@@ -315,7 +315,7 @@
 		parseLocation: parseLocation,
 		getUIDByKey: getUIDByKey,
 		hasClass: function(el, cls) {
-      return el.nodeType === 1 && ClassList(el).contains(cls);
+			return el.nodeType === 1 && ClassList(el).contains(cls);
 		},
 
 		location: location,
