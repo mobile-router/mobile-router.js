@@ -80,7 +80,6 @@
 
 		/**
 		 * 停止监听
-		 * @return {[type]} [description]
 		 */
 		stop: function() {
 			win.removeEventListener('popstate', this.onChange);
