@@ -79,13 +79,24 @@
 
 	};
 
-	// 是否是webkit
-	var isWebkit = 'WebkitAppearance' in document.documentElement.style || typeof document.webkitHidden != 'undefined';
-	// 动画结束事件名
-	var aniEndName = isWebkit ? 'webkitAnimationEnd' : 'animationend';
-
 	// 蒙层元素
-	var maskEle = document.createElement('div');
+	var maskEle = M.document.createElement('div');
+
+	// 动画结束事件名
+	var aniEndName = (function() {
+		var eleStyle = maskEle.style;
+		var verdors = ['a', 'webkitA', 'MozA', 'OA', 'msA'];
+		var endEvents = ['animationend', 'webkitAnimationEnd', 'animationend', 'oAnimationEnd', 'MSAnimationEnd'];
+		var animation;
+		for (var i = 0, len = verdors.length; i < len; i++) {
+			animation = verdors[i] + 'nimation';
+			if (animation in eleStyle) {
+				return endEvents[i];
+			}
+		}
+		return 'animationend';
+	}());
+	
 
 	var Router = {
 
