@@ -649,7 +649,7 @@
 	M.extendByBase(Router);
 
 	// 监听history的change
-	M.history.on('change', function(type, state, oldState) {
+	history.on('change', function(type, state, oldState) {
 		var first = false;
 		if (!oldState) {
 			// 第一次
