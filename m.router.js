@@ -444,13 +444,15 @@
 			M.removeClass(_pageViewEle, initPosClass);
 			M.addClass(_pageViewEle, enterClass);
 			
-			// 增加对hash处理 有时候浏览器不能滚动到响应的
-			// 带有hash id 的元素位置
-			var hash = options.state.hash;
-			var scrollToEle;
-			if (hash) {
-				scrollToEle = M.document.getElementById(hash);
-				scrollToEle && scrollToEle.scrollIntoView();
+			if (!state.cached) {
+				// 增加对hash处理 有时候浏览器不能滚动到响应的
+				// 带有hash id 的元素位置
+				var hash = options.state.hash;
+				var scrollToEle;
+				if (hash) {
+					scrollToEle = M.document.getElementById(hash);
+					scrollToEle && scrollToEle.scrollIntoView();
+				}
 			}
 
 			var entered = false;
