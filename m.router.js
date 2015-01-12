@@ -444,6 +444,14 @@
 			M.removeClass(_pageViewEle, initPosClass);
 			M.addClass(_pageViewEle, enterClass);
 			
+			// 增加对hash处理 有时候浏览器不能滚动到响应的
+			// 带有hash id 的元素位置
+			var hash = options.state.hash;
+			var scrollToEle;
+			if (hash) {
+				scrollToEle = M.document.getElementById(hash);
+				scrollToEle && scrollToEle.scrollIntoView();
+			}
 
 			var entered = false;
 			var leaved = false;
@@ -658,7 +666,6 @@
 		// 如果path为空 但是有base 说明 可以path为/
 		if (path || history.base || first) {
 			if (!path || path !== '/') path = '/' + (path || '');
-			// Router.setLastPath(path);
 			var parsed = parseQuery(path);
 			Router.route('get', parsed.path, parsed.query, {
 				first: first,
