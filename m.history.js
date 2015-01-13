@@ -53,17 +53,24 @@
 
 		/**
 		 * 启动
-		 * @param  {String} base 设置的base path
+		 * @param  {Object} options 配置参数
 		 */
-		start: function(base) {
+		start: function(options) {
 			if (this._startd) return;
+			if (!options) options = {};
+			var base = options.base;
 			if (M.isDefined(base) && M.isString(base)) {
 				this.base = parseBasePath(base);
 			}
 			this._startd = true;
 
+			this.options = M.extend({
+				enablePushState: true
+			}, options);
+
 			if (support) {
 				// 监听改变
+				this.options.enablePushState &&
 				win.addEventListener('popstate', this.onChange);
 
 				// 阻止 a
@@ -73,7 +80,7 @@
 			// 需要初始化一次当前的state
 			this.onChange({
 				type: 'popstate',
-				state: History.getUrlState(location.href)
+				state: History.getUrlState(M.location.href)
 			});
 			this.trigger('inited');
 		},
@@ -82,8 +89,11 @@
 		 * 停止监听
 		 */
 		stop: function() {
-			win.removeEventListener('popstate', this.onChange);
-			M.document.removeEventListener('click', this.onDocClick);
+			if (support) {
+				this.options.enablePushState &&
+				win.removeEventListener('popstate', this.onChange);
+				M.document.removeEventListener('click', this.onDocClick);
+			}
 			this._startd = false;
 			this.index = -1;
 			stateCache = {};
@@ -161,10 +171,11 @@
 		 */
 		pushState: function(state, checked) {
 			if (!checked) {
-				if (!this.checkUrl(state.url, state.origin) || state.url === M.location.href) {
+				if (!this.checkUrl(state.url, state.origin) || state.url === History.getCurrentState().url) {
 					return;
 				}
 			}
+			this.options.enablePushState &&
 			history[state.replace == 'true' ? 'replaceState' : 'pushState'](state, state.title, state.url);
 			this.onChange({
 				state: state
@@ -176,7 +187,7 @@
 		 * @param  {Event|Object|Undefined} e 事件对象或者包含state对象
 		 */
 		onChange: function(e) {
-			var state = e && e.state || History.getUrlState(location.href);
+			var state = e && e.state || History.getUrlState(M.location.href);
 			var oldState = History.getCurrentState();
 
 			// 如果新的url和旧的url只是hash不同，那么应该走scrollIntoView
@@ -201,7 +212,7 @@
 				e.preventDefault();
 				return false;
 			}
-			document.title = state.title;
+			M.document.title = state.title;
 			History.index = newIndex;
 			// 触发改变事件
 			History.trigger(type, state, oldState);
@@ -249,12 +260,12 @@
 			if (url) {
 				if (url.charAt(0) === '/') url = url.slice(1);
 			} else {
-				url = location.href;
+				url = M.location.href;
 			}
 			var parsedUrl = M.parseUrl(url);
 			return {
 				data: data || (data = {}),
-				title: title || data.title || document.title,
+				title: title || data.title || M.document.title,
 				rurl: parsedUrl.rurl,
 				url: parsedUrl.url,
 				origin: parsedUrl.origin,
