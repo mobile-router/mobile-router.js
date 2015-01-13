@@ -1,6 +1,6 @@
 a, img {-webkit-touch-callout:none;}
-html, body {height:100%;}
-body {position:relative;overflow:hidden;-webkit-user-select:none;user-select:none;-ms-touch-action:none;}
+html, body {overflow:hidden;height:100%;}
+body {position:relative;-webkit-user-select:none;user-select:none;-ms-touch-action:none;}
 
 /*页面loading*/
 .mask {z-index:10;top:0;right:0;bottom:0;left:0;position:fixed;background:rgba(0, 0, 0, .35);}
