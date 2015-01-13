@@ -67,7 +67,7 @@
 		/*是否有动画*/
 		animation: true,
 		/*类型*/
-		aniForm: 'slide',
+		aniClass: 'slide',
 
 		/*蒙层class*/
 		maskClass: 'mask',
@@ -424,8 +424,8 @@
 
 			var animation = routerOptions.animation;
 			if (animation) {
-				var aniEnterClass = aniClass + ' ' + this.getOption(state, options.state, 'aniForm');
-				var aniLeaveClass = aniClass + ' ' + this.getOption(state, options.oldState, 'aniForm');
+				var aniEnterClass = aniClass + ' ' + this.getOption(state, options.state, 'aniClass');
+				var aniLeaveClass = aniClass + ' ' + this.getOption(state, options.oldState, 'aniClass');
 
 				enterClass = aniEnterClass + ' ' + enterClass;
 				leaveClass = aniLeaveClass + ' ' + leaveClass;

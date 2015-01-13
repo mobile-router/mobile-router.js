@@ -78,7 +78,7 @@ M.router.init([
 	/*是否有动画*/
 	animation: true,
 	/*有动画的话，动画的类型*/
-	aniForm: 'slide',
+	aniClass: 'slide',
 
 	/*蒙层class 主要是显示loading时的蒙层*/
 	maskClass: 'mask',
