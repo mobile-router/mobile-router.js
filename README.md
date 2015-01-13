@@ -17,6 +17,8 @@ M — Lightweight single page bone for mobile web App.轻量级移动端单页�
 
 * 保留浏览器原生`hash`功能，根据`hash`，可自由跳转到相应`id`元素位置。
 
+* 可配置是否可用`pushstate`功能，不启用的话，仅仅影响的是不产生历史，但是路由也就是好使的，也就是还是基于`url`的。
+
 ### 一些注意点：
 
 * 不管画面是否已缓存在页面中，只要切换回显示了，那么就会调用`callback`，而`callback`中大多数情况需要处理监听事件、操作`DOM`，这时候可根据`this.cached`来区分；当没有缓存在页面上时为`false`，或者缓存在页面上了，但是模板更新了，这时候也为`false`。
