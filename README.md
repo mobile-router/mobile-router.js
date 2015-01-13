@@ -133,3 +133,6 @@ M.history.start({
 ### 代码风格
 
 没有用空格，而是用的`tab`。
+
+### 协议
+[MIT](https://github.com/dolymood/M/blob/master/LICENSE)
