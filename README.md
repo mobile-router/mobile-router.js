@@ -113,7 +113,10 @@ M.router.on('routeChangeEnd', function(currentRouteState) {
 });
 
 // 开始 监听history
-M.history.start(/*base path*/);
+M.history.start({
+	// base: '/', // base path
+	// enablePushState: true // 启用pushstate
+});
 
 ```
 
