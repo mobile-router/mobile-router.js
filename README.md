@@ -5,7 +5,7 @@ M — Lightweight single page bone for mobile web App.轻量级移动端单页�
 
 * 使用简单、方便、轻量，基于 [history](https://developer.mozilla.org/en-US/docs/Web/Guide/API/DOM/Manipulating_the_browser_history)、[window.onpopstate](https://developer.mozilla.org/en-US/docs/WindowEventHandlers.onpopstate)。
 
-* 考虑后端渲染首屏的情况，只需要按结构输出响应的片段即可。
+* 考虑后端渲染首屏的情况，只需要按结构输出响应的片段即可，利于`SEO`。
 
 * 任意选择怎么得到字符串模板，可以自己拼接字符串，也可以利用模板引擎渲染（字符串的）；同时支持异步（远程获取模板，或者去请求数据在前端构建模板）；可配置是否缓存结果模板。
 
