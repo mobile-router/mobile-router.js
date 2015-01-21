@@ -5,19 +5,21 @@ M — Lightweight single page bone for mobile web App.轻量级移动端单页�
 
 * 使用简单、方便、轻量，基于 [history](https://developer.mozilla.org/en-US/docs/Web/Guide/API/DOM/Manipulating_the_browser_history)、[window.onpopstate](https://developer.mozilla.org/en-US/docs/WindowEventHandlers.onpopstate)。
 
-* 考虑后端渲染首屏的情况，只需要按结构输出响应的片段即可，利于`SEO`。
+* 无依赖，可与其他框架（库）搭配自由使用，例如：`jquery`, `zepto`, `iscroll`等。
 
-* 任意选择怎么得到字符串模板，可以自己拼接字符串，也可以利用模板引擎渲染（字符串的）；同时支持异步（远程获取模板，或者去请求数据在前端构建模板）；可配置是否缓存结果模板。
+* 任意选择字符串式模板引擎，当然最简单的就是自己拼接字符串了；同时支持异步（远程获取模板，或者去请求数据在前端构建模板）；可配置是否缓存结果模板。
+
+* 考虑后端渲染首屏的情况，只需要按结构输出响应的片段即可，利于`SEO`。
 
 * 自动缓存部分画面，可配置缓存数量，默认3个。
 
 * 每个路由都有对应的`callback`和`onDestroy`配置方法，分别用于显示了对应画面后的回调以及当该画面销毁时回调。
 
-* 利用 CSS animation 控制动画变换效果，也可设置关闭动画效果。
+* 利用`CSS animation`控制动画变换效果，也可设置关闭动画效果。
 
-* 保留浏览器原生`hash`功能，根据`hash`，可自由跳转到相应`id`元素位置。
+* “保留”浏览器原生`hash`功能，根据`hash`，可自由跳转到对应`id`元素位置。
 
-* 可配置是否可用`pushstate`功能，不启用的话，仅仅影响的是不产生历史，但是路由也就是好使的，也就是还是基于`url`的。
+* 可配置`enablePushState`决定是否使用`pushstate`功能，默认启用；不启用的话，仅仅影响的是不产生历史，但是路由依旧好使的，也就是还是基于`url`的。
 
 ### 一些注意点：
 
@@ -27,7 +29,7 @@ M — Lightweight single page bone for mobile web App.轻量级移动端单页�
 
 * `M.history`的默认的 base path 是页面中`base`元素的`href`的值，如果没有，则默认是`/`；也可以在`M.history.start()`时传入。
 
-* 对于[history](https://developer.mozilla.org/en-US/docs/Web/Guide/API/DOM/Manipulating_the_browser_history)、[window.onpopstate](https://developer.mozilla.org/en-US/docs/WindowEventHandlers.onpopstate)不支持或者支持不够好的浏览器来说，能够正常匹配对应`route`，也就是说能够正常调用`route`配置项中的`getTemplate`以及`callback`（`onDestroy`除外），其他功能都没有，点击链接直接刷新页面。这样就可以在不改变代码的情况下，适配了不支持的浏览器，但是可能会影响单个页面加载js的大小。
+* 对于[history](https://developer.mozilla.org/en-US/docs/Web/Guide/API/DOM/Manipulating_the_browser_history)、[window.onpopstate](https://developer.mozilla.org/en-US/docs/WindowEventHandlers.onpopstate)不支持或者支持不够好的浏览器来说，能够正常匹配对应`route`，也就是说能够正常调用`route`配置项中的`getTemplate`以及`callback`（`onDestroy`除外），其他功能都没有，点击链接直接刷新页面。这样就可以在不改变代码的情况下，适配了不支持的浏览器。当然这种情况也可以通过取得`M.history.support`来判断，如果不支持的话，可以在调用`M.history.start`时设置参数`enablePushState`为`false`也可以，但不建议，因为没有历史记录了。
 
 ### 使用方法：
 
@@ -135,4 +137,5 @@ M.history.start({
 没有用空格，而是用的`tab`。
 
 ### 协议
+
 [MIT](https://github.com/dolymood/M/blob/master/LICENSE)
