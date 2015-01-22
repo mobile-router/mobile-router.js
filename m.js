@@ -320,7 +320,7 @@
 				'text/javascript': 1,
 				'text/ecmascript': 1,
 				'application/ecmascript': 1,
-				'application/javascript'
+				'application/javascript': 1
 			};
 			var script = document.createElement('script');
 			var hyperspace = document.createDocumentFragment();
