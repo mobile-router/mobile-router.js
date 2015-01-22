@@ -286,6 +286,88 @@
 		}
 	});
 
+	// innerHTML部分
+	if ($ && isFunction($.prototype.html)) {
+		M.innerHTML = function(ele, html) {
+			$(ele).html(html);
+		};
+	} else {
+		M.innerHTML = function() {
+			var tagHooks = new function() {
+				M.extend(this, {
+					option: document.createElement('select'),
+					thead: document.createElement('table'),
+					td: document.createElement('tr'),
+					area: document.createElement('map'),
+					tr: document.createElement('tbody'),
+					col: document.createElement('colgroup'),
+					legend: document.createElement('fieldset'),
+					_default: document.createElement('div'),
+					'g': document.createElementNS('http://www.w3.org/2000/svg', 'svg')
+				});
+				this.optgroup = this.option;
+				this.tbody = this.tfoot = this.colgroup = this.caption = this.thead;
+				this.th = this.td;
+			};
+			'circle,defs,ellipse,image,line,path,polygon,polyline,rect,symbol,text,use'.replace(rword, function(tag) {
+				tagHooks[tag] = tagHooks.g; //处理SVG
+			});
+
+			var rtagName = /<([\w:]+)/;
+			var rxhtml = /<(?!area|br|col|embed|hr|img|input|link|meta|param)(([\w:]+)[^>]*)\/>/ig;
+			var scriptTypes = {
+				'': 1,
+				'text/javascript': 1,
+				'text/ecmascript': 1,
+				'application/ecmascript': 1,
+				'application/javascript'
+			};
+			var script = document.createElement('script');
+			var hyperspace = document.createDocumentFragment();
+			
+			function parseHTML(html) {
+				if (typeof html !== 'string') html = html + '';
+				html = html.replace(rxhtml, '<$1></$2>').trim();
+				var tag = (rtagName.exec(html) || ['', ''])[1].toLowerCase(),
+						wrapper = tagHooks[tag] || tagHooks._default,
+						fragment = hyperspace.cloneNode(false),
+						firstChild;
+
+				wrapper.innerHTML = html;
+				var els = wrapper.getElementsByTagName('script');
+				var forEach = [].forEach;
+				if (els.length) {
+					//使用innerHTML生成的script节点不会发出请求与执行text属性
+					for (var i = 0, el, neo; el = els[i++]; ) {
+						if (scriptTypes[el.type]) {
+							neo = script.cloneNode(false);
+							each(el.attributes, function(attr) {
+								neo.setAttribute(attr.name, attr.value);
+							});
+							neo.text = el.text;
+							el.parentNode.replaceChild(neo, el);
+						}
+					}
+				}
+
+				while (firstChild = wrapper.firstChild) {
+					// 将wrapper上的节点转移到文档碎片上！
+					fragment.appendChild(firstChild);
+				}
+				return fragment;
+			}
+
+			return function(ele, html) {
+				var f = parseHTML(html);
+				// 先清空 ele 内容
+				ele.innerHTML = '';
+				ele.appendChild(f);
+				f = null;
+			};
+			
+		}();
+	}
+
 	// 暴露到M上
 	M.extend({
 		rword: rword,

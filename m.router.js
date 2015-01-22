@@ -409,7 +409,7 @@
 
 			// 模板不一样 更新
 			if (!state.cached || template !== state._oldTemplate) {
-				_pageViewEle.innerHTML = template;
+				M.innerHTML(_pageViewEle, template);
 				state.cached = false;
 			}
 
