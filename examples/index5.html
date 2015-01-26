@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>M — Lightweight single page bone for mobile web App.轻量级移动端单页面骨架</title>
+	<meta charset="utf-8">
+	<!-- viewport 设置 -->
+	<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+	<!-- 允许全屏模式 -->
+	<meta name="apple-mobile-web-app-capable" content="yes">
+	<!-- 设置状态栏颜色 -->
+	<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+	<!-- 主屏标题 -->
+	<meta name="apple-mobile-web-app-title" content="M demo">
+	<!-- 忽略自动识别电话号码 -->
+	<meta content="telephone=no" name="format-detection">
+	<!-- 忽略识别邮箱 -->
+	<meta content="email=no" name="format-detection">
+	<!-- 智能 app 广告条 -->
+	<!-- <meta name="apple-itunes-app" content="app-id=myAppStoreID, affiliate-data=myAffiliateData, app-argument=myURL">  -->
+
+	<!-- 针对手持设备优化，主要是针对一些老的不识别 viewport 的浏览器，比如黑莓 -->
+	<meta name="HandheldFriendly" content="true">
+	<!-- 微软的老式浏览器 -->
+	<meta name="MobileOptimized" content="320">
+	<!-- uc 强制竖屏 -->
+	<meta name="screen-orientation" content="portrait">
+	<!-- QQ 强制竖屏 -->
+	<meta name="x5-orientation" content="portrait">
+	<!-- UC 强制全屏 -->
+	<meta name="full-screen" content="yes">
+	<!-- QQ 强制全屏 -->
+	<meta name="x5-fullscreen" content="true">
+	<!-- UC 应用模式 -->
+	<meta name="browsermode" content="application">
+	<!-- QQ 应用模式 -->
+	<meta name="x5-page-mode" content="app">
+	<!-- windows phone 点击无高光 -->
+	<meta name="msapplication-tap-highlight" content="no">
+	<!-- 避免百度这样的玩意转码 -->
+	<meta http-equiv="Cache-Control" content="no-siteapp">
+	<script type="text/javascript" src="../lib/zepto.js"></script>
+	<script type="text/javascript" src="../lib/fastclick.js"></script>
+	<link rel="stylesheet" type="text/css" href="../m.css">
+	<link rel="stylesheet" type="text/css" href="../m.animate.css">
+	<style type="text/css">
+	* {margin:0;padding:0;}
+	
+	.nav {z-index:5;left:0;top:0;position:absolute;width:100%;background:#13a2d7;}
+	li {display:inline-block;vertical-align:top;margin-left:5px;}
+	a {padding:14px 20px;display:block;}
+	
+	body {background:#d6d6d6;}
+	.page-view {top:46px;bottom:0;height:auto;background:#d6d6d6;}
+	</style>
+	<base href="/examples/">
+</head>
+<body>
+	<ul class="nav">
+		<li><a href="" data-title="M — Lightweight single page bone for mobile web App.轻量级移动端单页面骨架">/</a></li>
+		<!-- 这里也可以配置 aniClass -->
+		<li><a href="a" data-title="a" data-ani-class="flip">a</a></li>
+		<li><a href="b?c=a&v=d" data-title="b">b</a></li>
+		<li><a href="c/xxx" data-title="c">c</a></li>
+		<li><a href="d/345" data-title="d">d</a></li>
+		<li><a href="e" data-title="e" data-rel="back">e</a></li>
+	</ul>
+	<div class="page-view"><div>/<p><a href="#link">link</a></p></div><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><h3 id="link">cc</h3></div>
+	<script type="text/javascript" src="../m.js"></script>
+	<script type="text/javascript" src="../m.history.js"></script>
+	<script type="text/javascript" src="../m.router.js"></script>
+	<script type="text/javascript">
+		FastClick.attach(document.body);
+
+		M.router.init([
+			{
+				path: '/',
+				getTemplate: function() {
+					return '<div>/<p><a href="#link">link</a></p></div><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><h3 id="link">cc</h3>';
+				},
+				callback: function() {
+					// console.log('/', this, arguments);
+				},
+				onDestroy: function() {
+					// 当前被销毁时调用
+					// console.log(this.element.id)
+				}
+			},
+			{
+				path: '/a',
+				getTemplate: function() {
+					return '<div>/a</div>';
+				},
+				callback: function() {
+					// console.log('/a', this, arguments);
+				}
+			},
+			{
+				path: '/b',
+				getTemplate: function(cb) {
+					setTimeout(function() {
+						cb('<div>/b</div>');
+					}, 500);
+				},
+				callback: function() {
+					// console.log('/b', this, arguments);
+				}
+			},
+			{
+				path: '/c/:cid',
+				// 这里也可以配置aniClass
+				aniClass: 'slideup',
+				getTemplate: function() {
+					// this.params
+					// this.query
+					return '<div>/c</div>';
+				},
+				callback: function() {
+					// console.log('/c', this, arguments);
+				}
+			},
+			{
+				path: '/d/{did:int}',
+				// cacheTemplate: true,
+				getTemplate: function(cb) {
+					var that = this;
+					setTimeout(function() {
+						var nextLink = 'd/' + (that.params.did + 1);
+						cb('<div>/d/' + that.params.did + '<p><a href="' + nextLink +'">' + nextLink + '</a></p></div>');
+					}, 200);
+				},
+				callback: function() {
+					// console.log('/d', this, arguments);
+				},
+				onDestroy: function() {
+					// 当前被销毁时调用
+					
+				}
+			},
+			{
+				path: '/e',
+				getTemplate: function() {
+					return '<div>/e</div>';
+				},
+				callback: function() {
+					// console.log('/e', this, arguments);
+				}
+			}
+		], {
+			viewsSelector: '',
+			animation: true,
+			// aniClass: 'slideup',
+			cacheTemplate: true,
+			error: function() {
+				M.router.navigate('/');
+			}
+		});
+
+		M.router.on('routeChangeStart', function() {
+			// console.log('routeChangeStart', arguments);
+		});
+
+		M.router.on('routeChangeEnd', function() {
+			// console.log('routeChangeEnd', arguments);
+		});
+
+		M.history.start();
+		M.history.on('change', function(type, state, oldState) {
+			// console.log(type, state, oldState);
+		});
+	</script>
+</body>
+</html>

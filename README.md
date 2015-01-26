@@ -126,13 +126,35 @@ M.history.start({
 
 ```
 
-如果首屏需要后端渲染好，那么只需要在页面上加入响应的页面结构即可：
+### 关于配置
+
+__`aniClass`和`cacgeTemplate`配置，依次取的是链接元素上的`data-xxx`->单个route规则中对一个的配置项->整体route配置规则中的配置。
+
+### examples中示例
+
+* `index.html`: 基本使用，都是默认配置，主要是关于`getTemplate`的2中方式以及在链接元素加入`data-rel=back`（反方向动画）配置。
+
+* `index2.html`: 关闭动画示例。
+
+* `index3.html`: 不缓存模板示例。
+
+* `index4.html`: 全局更改动画class示例。
+
+* `index5.html`: 局部更改动画class的两种方式示例。
+
+* `index6.html`: 局部更改缓存模板的两种方式示例。
+
+* `index7.html`: `M.history`禁用掉pushstate示例。
+
+### 后端渲染
+
+只需要在响应时加入对应的页面结构即可：
 
 ```html
 <div class="page-view">后端渲染内容</div>
 ```
 
-因为默认第一次初始化时，会查找页面上带有`viewClass`的元素，如果找到了，且`innerHTML`不为空，那么就不会再去调用`getTemplate`来得到模板内容了。
+这是因为默认第一次初始化时，会查找页面上带有`viewClass`的元素，如果找到了，且`innerHTML`不为空，那么就不会再去调用`getTemplate`来得到模板内容了。
 
 ### 代码风格
 

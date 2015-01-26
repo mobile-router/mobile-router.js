@@ -313,6 +313,7 @@
 							cacheTemplate = true;
 						}
 					}
+					if (M.isString(cacheTemplate)) cacheTemplate = cacheTemplate === 'true';
 					// 这里加上 得到模板 加动画 class 操作
 					if (!(cacheTemplate && templateCache[el.path]) && el.getTemplate) {
 						this.trigger('routeChangeStart', el, args);
@@ -424,8 +425,12 @@
 
 			var animation = routerOptions.animation;
 			if (animation) {
-				var aniEnterClass = aniClass + ' ' + this.getOption(state, options.state, 'aniClass');
-				var aniLeaveClass = aniClass + ' ' + this.getOption(state, options.oldState, 'aniClass');
+				var aniEnterClass = aniClass;
+				var aniLeaveClass = aniClass;
+				if (!first) {
+					aniEnterClass += ' ' + this.getOption(state, options.state, 'aniClass');
+					aniLeaveClass += ' ' + this.getOption(this.pageViewState, options.oldState, 'aniClass');
+				}
 
 				enterClass = aniEnterClass + ' ' + enterClass;
 				leaveClass = aniLeaveClass + ' ' + leaveClass;
