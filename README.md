@@ -128,7 +128,7 @@ M.history.start({
 
 ### 关于配置
 
-__`aniClass`和`cacgeTemplate`配置，依次取的是链接元素上的`data-xxx`->单个route规则中对一个的配置项->整体route配置规则中的配置。
+`aniClass`和`cacgeTemplate`配置，依次取的是链接元素上的`data-xxx`->单个route规则中对一个的配置项->整体route配置规则中的配置。
 
 ### examples中示例
 
