@@ -4,13 +4,13 @@
 * Copyright (c) jQuery Project
 * Dual licensed under the MIT (MIT-LICENSE.txt) or GPL (GPL-LICENSE.txt) licenses.
 */
-.ani.enter {
+.ani.in {
 	-webkit-animation-timing-function: ease-out;
 	-webkit-animation-duration: 350ms;
 	animation-timing-function: ease-out;
 	animation-duration: 350ms;
 }
-.ani.leave {
+.ani.out {
 	-webkit-animation-timing-function: ease-in;
 	-webkit-animation-duration: 225ms;
 	animation-timing-function: ease-in;
@@ -32,14 +32,14 @@
 	from { opacity: 1; }
 	to { opacity: 0; }
 }
-.fade.leave {
+.fade.out {
 	opacity: 0;
 	-webkit-animation-duration: 125ms;
 	-webkit-animation-name: fadeout;
 	animation-duration: 125ms;
 	animation-name: fadeout;
 }
-.fade.enter {
+.fade.in {
 	opacity: 1;
 	-webkit-animation-duration: 225ms;
 	-webkit-animation-name: fadein;
@@ -50,7 +50,7 @@
 	-webkit-transform-origin: 50% 50%;
 	transform-origin: 50% 50%;
 }
-.pop.enter {
+.pop.in {
 	-webkit-transform: scale(1);
 	-webkit-animation-name: popin;
 	-webkit-animation-duration: 350ms;
@@ -59,18 +59,18 @@
 	animation-duration: 350ms;
 	opacity: 1;
 }
-.pop.leave {
+.pop.out {
 	-webkit-animation-name: fadeout;
 	-webkit-animation-duration: 100ms;
 	animation-name: fadeout;
 	animation-duration: 100ms;
 	opacity: 0;
 }
-.pop.enter.reverse {
+.pop.in.reverse {
 	-webkit-animation-name: fadein;
 	animation-name: fadein;
 }
-.pop.leave.reverse {
+.pop.out.reverse {
 	-webkit-transform: scale(.8);
 	-webkit-animation-name: popout;
 	transform: scale(.8);
@@ -150,37 +150,37 @@
 	from { transform: translateX(0); }
 	to { transform: translateX(100%); }
 }
-.slide.leave, .slide.enter {
+.slide.out, .slide.in {
 	-webkit-animation-timing-function: ease-out;
 	-webkit-animation-duration: 350ms;
 	animation-timing-function: ease-out;
 	animation-duration: 350ms;
 }
-.slide.leave {
+.slide.out {
 	-webkit-transform: translate3d(-100%,0,0);
 	-webkit-animation-name: slideouttoleft;
 	transform: translateX(-100%);
 	animation-name: slideouttoleft;
 }
-.slide.enter {
+.slide.in {
 	-webkit-transform: translate3d(0,0,0);
 	-webkit-animation-name: slideinfromright;
 	transform: translateX(0);
 	animation-name: slideinfromright;
 }
-.slide.leave.reverse {
+.slide.out.reverse {
 	-webkit-transform: translate3d(100%,0,0);
 	-webkit-animation-name: slideouttoright;
 	transform: translateX(100%);
 	animation-name: slideouttoright;
 }
-.slide.enter.reverse {
+.slide.in.reverse {
 	-webkit-transform: translate3d(0,0,0);
 	-webkit-animation-name: slideinfromleft;
 	transform: translateX(0);
 	animation-name: slideinfromleft;
 }
-.slidefade.leave {
+.slidefade.out {
 	-webkit-transform: translateX(-100%);
 	-webkit-animation-name: slideouttoleft;
 	-webkit-animation-duration: 225ms;
@@ -188,7 +188,7 @@
 	animation-name: slideouttoleft;
 	animation-duration: 225ms;
 }
-.slidefade.enter {
+.slidefade.in {
 	-webkit-transform: translateX(0);
 	-webkit-animation-name: fadein;
 	-webkit-animation-duration: 200ms;
@@ -196,7 +196,7 @@
 	animation-name: fadein;
 	animation-duration: 200ms;
 }
-.slidefade.leave.reverse {
+.slidefade.out.reverse {
 	-webkit-transform: translateX(100%);
 	-webkit-animation-name: slideouttoright;
 	-webkit-animation-duration: 200ms;
@@ -204,7 +204,7 @@
 	animation-name: slideouttoright;
 	animation-duration: 200ms;
 }
-.slidefade.enter.reverse {
+.slidefade.in.reverse {
 	-webkit-transform: translateX(0);
 	-webkit-animation-name: fadein;
 	-webkit-animation-duration: 200ms;
@@ -213,13 +213,13 @@
 	animation-duration: 200ms;
 }
 /* slide down */
-.slidedown.leave {
+.slidedown.out {
 	-webkit-animation-name: fadeout;
 	-webkit-animation-duration: 100ms;
 	animation-name: fadeout;
 	animation-duration: 100ms;
 }
-.slidedown.enter {
+.slidedown.in {
 	-webkit-transform: translateY(0);
 	-webkit-animation-name: slideinfromtop;
 	-webkit-animation-duration: 250ms;
@@ -227,13 +227,13 @@
 	animation-name: slideinfromtop;
 	animation-duration: 250ms;
 }
-.slidedown.enter.reverse {
+.slidedown.in.reverse {
 	-webkit-animation-name: fadein;
 	-webkit-animation-duration: 150ms;
 	animation-name: fadein;
 	animation-duration: 150ms;
 }
-.slidedown.leave.reverse {
+.slidedown.out.reverse {
 	-webkit-transform: translateY(-100%);
 	-webkit-animation-name: slideouttotop;
 	-webkit-animation-duration: 200ms;
@@ -258,13 +258,13 @@
 	to { transform: translateY(-100%); }
 }
 /* slide up */
-.slideup.leave {
+.slideup.out {
 	-webkit-animation-name: fadeout;
 	-webkit-animation-duration: 100ms;
 	animation-name: fadeout;
 	animation-duration: 100ms;
 }
-.slideup.enter {
+.slideup.in {
 	-webkit-transform: translateY(0);
 	-webkit-animation-name: slideinfrombottom;
 	-webkit-animation-duration: 250ms;
@@ -272,13 +272,13 @@
 	animation-name: slideinfrombottom;
 	animation-duration: 250ms;
 }
-.slideup.enter.reverse {
+.slideup.in.reverse {
 	-webkit-animation-name: fadein;
 	-webkit-animation-duration: 150ms;
 	animation-name: fadein;
 	animation-duration: 150ms;
 }
-.slideup.leave.reverse {
+.slideup.out.reverse {
 	-webkit-transform: translateY(100%);
 	-webkit-animation-name: slideouttobottom;
 	-webkit-animation-duration: 200ms;
@@ -319,7 +319,7 @@
 	backface-visibility: hidden;
 	transform: translateX(0);
 }
-.flip.leave {
+.flip.out {
 	-webkit-transform: rotateY(-90deg) scale(.9);
 	-webkit-animation-name: flipouttoleft;
 	-webkit-animation-duration: 175ms;
@@ -327,19 +327,19 @@
 	animation-name: flipouttoleft;
 	animation-duration: 175ms;
 }
-.flip.enter {
+.flip.in {
 	-webkit-animation-name: flipintoright;
 	-webkit-animation-duration: 225ms;
 	animation-name: flipintoright;
 	animation-duration: 225ms;
 }
-.flip.leave.reverse {
+.flip.out.reverse {
 	-webkit-transform: rotateY(90deg) scale(.9);
 	-webkit-animation-name: flipouttoright;
 	transform: rotateY(90deg) scale(.9);
 	animation-name: flipouttoright;
 }
-.flip.enter.reverse {
+.flip.in.reverse {
 	-webkit-animation-name: flipintoleft;
 	animation-name: flipintoleft;
 }
@@ -395,7 +395,7 @@
 	transform: translateX(0);
 	transform-origin: 0;
 }
-.turn.leave {
+.turn.out {
 	-webkit-transform: rotateY(-90deg) scale(.9);
 	-webkit-animation-name: flipouttoleft;
 	-webkit-animation-duration: 125ms;
@@ -404,20 +404,20 @@
 	animation-name: flipouttoleft;
 	animation-duration: 125ms;
 }
-.turn.enter {
+.turn.in {
 	-webkit-animation-name: flipintoright;
 	-webkit-animation-duration: 250ms;
 	animation-name: flipintoright;
 	animation-duration: 250ms;
 	
 }
-.turn.leave.reverse {
+.turn.out.reverse {
 	-webkit-transform: rotateY(90deg) scale(.9);
 	-webkit-animation-name: flipouttoright;
 	transform: rotateY(90deg) scale(.9);
 	animation-name: flipouttoright;
 }
-.turn.enter.reverse {
+.turn.in.reverse {
 	-webkit-animation-name: flipintoleft;
 	animation-name: flipintoleft;
 }
@@ -458,7 +458,7 @@
 	-webkit-transform-origin: 50% 30%;
 	transform-origin: 50% 30%;	
 }
-.flow.leave {
+.flow.out {
 	-webkit-transform: translateX(-100%) scale(.7);
 	-webkit-animation-name: flowouttoleft;
 	-webkit-animation-timing-function: ease;
@@ -468,7 +468,7 @@
 	animation-timing-function: ease;
 	animation-duration: 350ms;
 }
-.flow.enter {
+.flow.in {
 	-webkit-transform: translateX(0) scale(1);
 	-webkit-animation-name: flowinfromright;
 	-webkit-animation-timing-function: ease;
@@ -478,13 +478,13 @@
 	animation-timing-function: ease;
 	animation-duration: 350ms;
 }
-.flow.leave.reverse {
+.flow.out.reverse {
 	-webkit-transform: translateX(100%);
 	-webkit-animation-name: flowouttoright;
 	transform: translateX(100%);
 	animation-name: flowouttoright;
 }
-.flow.enter.reverse {
+.flow.in.reverse {
 	-webkit-animation-name: flowinfromleft;
 	animation-name: flowinfromleft;
 }

@@ -387,8 +387,8 @@
 				nowView = M.document.getElementsByClassName(routerOptions.viewClass)[0];
 			}
 			
-			var enterClass = 'enter';
-			var leaveClass = 'leave';
+			var enterClass = 'in';
+			var leaveClass = 'out';
 			var initClass = 'init';
 			var initPosClass = leaveClass;
 			var reverseClass = 'reverse';

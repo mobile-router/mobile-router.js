@@ -12,19 +12,19 @@ body {position:relative;-webkit-user-select:none;user-select:none;-ms-touch-acti
 /*页面视图*/
 .page-view {top:0;left:0;position:absolute;width:100%;height:100%;overflow:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;}
 /*前进方向进入*/
-.page-view.enter {-webkit-transform:translateX(0);transform:translateX(0);}
+.page-view.in {-webkit-transform:translateX(0);transform:translateX(0);}
 /*前进方向离开*/
-.page-view.leave {-webkit-transform:translateX(-100%);transform:translateX(-100%)}
+.page-view.out {-webkit-transform:translateX(-100%);transform:translateX(-100%)}
 
 
 /*前进方向进入*/
-.slide.enter {-webkit-animation-name:slideinfromright;animation-name:slideinfromright;}
+.slide.in {-webkit-animation-name:slideinfromright;animation-name:slideinfromright;}
 /*以后退方向进入*/
-.slide.enter.reverse {-webkit-animation-name:slideinfromleft;animation-name:slideinfromleft;}
+.slide.in.reverse {-webkit-animation-name:slideinfromleft;animation-name:slideinfromleft;}
 /*前进方向离开*/
-.slide.leave {-webkit-animation-name:slideouttoleft;animation-name:slideouttoleft;}
+.slide.out {-webkit-animation-name:slideouttoleft;animation-name:slideouttoleft;}
 /*后退方向离开*/
-.slide.leave.reverse {-webkit-animation-name:slideouttoright;animation-name:slideouttoright;}
+.slide.out.reverse {-webkit-animation-name:slideouttoright;animation-name:slideouttoright;}
 
 /*初始化的时候 还是需要加上一点动画的 这样是为了触发animationend事件 */
 .ani.init {-webkit-animation-name:liter;-webkit-animation-duration:.1s;animation-name:liter;animation-duration:.1s;}
