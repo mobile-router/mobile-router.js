@@ -64,7 +64,7 @@
 		var href = '';
 		do {
 			if (target !== body && target.nodeType === 1 && (
-				(href = target.dataset.href) || (
+				(href = target.getAttribute('data-href')) || (
 				 href = target.href)
 			)) {
 				break;
