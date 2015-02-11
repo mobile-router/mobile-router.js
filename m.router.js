@@ -1,9 +1,9 @@
 ;(function(win, factory) {
 	if (typeof define === 'function' && (define.amd || define.cmd)) {
-		define('router', function(require) {
+		define('m.router', function(require) {
 			var M = require('m');
-			var history = require('history');
-			return factory(win, M, history);
+			var history = require('m.history');
+			return (M.router = factory(win, M, history));
 		});
 	} else {
 		M.router = factory(win, M, M.history);

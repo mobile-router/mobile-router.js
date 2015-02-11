@@ -64,7 +64,7 @@
 		var href = '';
 		do {
 			if (target !== body && target.nodeType === 1 && (
-				(href = target.getAttribute('data-href')) || (
+				(href = target.dataset.href) || (
 				 href = target.href)
 			)) {
 				break;
@@ -287,7 +287,7 @@
 	});
 
 	// innerHTML部分
-	if ($ && isFunction($.prototype.html)) {
+	if (typeof $ !== 'undefined' && isFunction($.prototype.html)) {
 		M.innerHTML = function(ele, html) {
 			$(ele).html(html);
 		};
