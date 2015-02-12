@@ -503,6 +503,9 @@
 					} else {
 						pagesCache.push(state);
 					}
+				} else {
+					pagesCache.splice(index, 1);
+					pagesCache.push(state);
 				}
 				that.pageViewState = state;
 				state.callback.apply(state, args);
