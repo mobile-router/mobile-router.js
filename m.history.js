@@ -293,13 +293,11 @@
 			if (this.hasUrl(url)) {
 				// 已存在
 				i = urlCache.indexOf(url);
-				// 重新更新
-				stateCache[url] = state;
 			} else {
 				urlCache.push(url);
 				i = urlCache.length - 1;
 			}
-			stateCache[url] = state;
+			stateCache[url] = M.extend(true, stateCache[url], state);
 			this.clearCache(i);
 			return i;
 		},

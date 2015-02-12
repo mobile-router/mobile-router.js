@@ -667,8 +667,7 @@
 		// 一般的场景就是 类似 返回按钮
 		if (type !== 'back' && state.data.rel === 'back') {
 			type = 'back';
-		}
-		if (!first && type === 'back' && oldState.data.rel === 'back') {
+		} else if (type === 'back' && state.data.rel !== 'back' && oldState.data.rel === 'back') {
 			type = 'forward';
 		}
 		var url = state.url;
