@@ -393,8 +393,7 @@
 			var initPosClass = leaveClass;
 			var reverseClass = 'reverse';
 			var aniClass = 'ani';
-			var allClass = aniClass + ' ' + enterClass + ' ' +
-										 leaveClass + ' ' + reverseClass + ' ' + initClass;
+			var allClass = enterClass + ' ' + reverseClass;
 
 			var _pageViewEle = M.document.getElementById(id);
 			if (!_pageViewEle) {
@@ -476,6 +475,7 @@
 				entered = true;
 				// 取消监听事件
 				_pageViewEle.removeEventListener(aniEndName, aniEnd);
+				M.removeClass(_pageViewEle, aniEnterClass + ' ' + initClass);
 				endCall(_pageViewEle);
 				checkPageViews();
 
@@ -487,6 +487,7 @@
 				leaved = true;
 				// 取消监听事件
 				pageViewState.element.removeEventListener(aniEndName, aniEnd2);
+				M.removeClass(pageViewState.element, aniLeaveClass);
 				// pageViewState.element.style.display = 'none';
 				checkPageViews();
 
@@ -497,16 +498,11 @@
 			function endCall(element) {
 				state.element = element;
 				var index = M.Array.indexOfByKey(pagesCache, state,  'path');
-				if (index === -1) {
-					if (that.pageViewState && (state.element.id.split('-')[2] - that.pageViewState.element.id.split('-')[2]) < 0) {
-						pagesCache.unshift(state);
-					} else {
-						pagesCache.push(state);
-					}
-				} else {
+				if (~index) {
+					// 移掉当前的
 					pagesCache.splice(index, 1);
-					pagesCache.push(state);
 				}
+				pagesCache.push(state);
 				that.pageViewState = state;
 				state.callback.apply(state, args);
 				that.trigger('routeChangeEnd', state, args);
