@@ -1,9 +1,11 @@
 M — Lightweight single page bone for mobile web App.轻量级移动端单页面骨架
 =
 
+
 [![NPM Version][npm-image]][npm-url]
 [![NPM Downloads][downloads-image]][downloads-url]
 [![Build Status][travis-image]][travis-url]
+
 
 [DEMO](http://demo.aijc.net/js/M/examples/)
 
