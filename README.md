@@ -4,7 +4,6 @@ M — Lightweight single page bone for mobile web App.轻量级移动端单页�
 
 [![NPM Version][npm-image]][npm-url]
 [![NPM Downloads][downloads-image]][downloads-url]
-[![Build Status][travis-image]][travis-url]
 
 
 [DEMO](http://demo.aijc.net/js/M/examples/)
@@ -169,3 +168,8 @@ M.history.start({
 ### 协议
 
 [MIT](https://github.com/dolymood/M/blob/master/LICENSE)
+
+[npm-image]: https://img.shields.io/npm/v/mobile-router.js.svg?style=flat
+[npm-url]: https://npmjs.org/package/mobile-router.js
+[downloads-image]: https://img.shields.io/npm/dm/mobile-router.js.svg?style=flat
+[downloads-url]: https://npmjs.org/package/mobile-router.js
