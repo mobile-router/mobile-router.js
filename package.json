@@ -1,0 +1,25 @@
+{
+  "name": "M",
+  "version": "1.0.0",
+  "description": "A lightweight single page bone for mobile web App.",
+  "main": "m.router.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": "dolymood/M",
+  "keywords": [
+    "mobile web app",
+    "single page application",
+    "javascript"
+  ],
+  "author": "dolymood",
+  "license": [{
+    "type": "MIT",
+    "url": "https://github.com/dolymood/M/blob/master/LICENSE" 
+  }],
+  "homepage": "https://github.com/dolymood/M",
+  "bugs": {
+    "url": "https://github.com/dolymood/M/issues",
+    "email" : "dolymood@gmail.com"
+  }
+}
