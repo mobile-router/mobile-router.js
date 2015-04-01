@@ -8,6 +8,8 @@ M — Lightweight single page bone for mobile web App.轻量级移动端单页�
 
 [DEMO](http://demo.aijc.net/js/M/examples/)
 
+[require.js DEMO](http://demo.aijc.net/js/M/examples/requirejs/)
+
 ### 优势：
 
 * 使用简单、方便、轻量，基于 [history](https://developer.mozilla.org/en-US/docs/Web/Guide/API/DOM/Manipulating_the_browser_history)、[window.onpopstate](https://developer.mozilla.org/en-US/docs/WindowEventHandlers.onpopstate)。
