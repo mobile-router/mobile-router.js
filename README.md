@@ -151,6 +151,8 @@ M.history.start({
 
 * `index7.html`: `M.history`禁用掉pushstate示例。
 
+* `requirejs/`: 使用 [require.js](http://requirejs.org/) 示例
+
 ### 后端渲染
 
 只需要在响应时加入对应的页面结构即可：
