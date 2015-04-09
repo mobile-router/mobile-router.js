@@ -1,4 +1,4 @@
-M — Lightweight single page bone for mobile web App.轻量级移动端单页面骨架
+M — Lightweight single page bone for mobile web App.轻量级web端单页面骨架
 =
 
 
