@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="UTF-8">
+    <title>M by dolymood</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" type="text/css" href="stylesheets/normalize.css" media="screen">
+    <link href='http://fonts.googleapis.com/css?family=Open+Sans:400,700' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen">
+    <link rel="stylesheet" type="text/css" href="stylesheets/github-light.css" media="screen">
+  </head>
+  <body>
+    <section class="page-header">
+      <h1 class="project-name">M</h1>
+      <h2 class="project-tagline">Lightweight single page bone for mobile web App.轻量级web端单页面骨架</h2>
+      <a href="https://github.com/dolymood/mobile-router.js" class="btn">View on GitHub</a>
+      <a href="https://github.com/dolymood/mobile-router.js/zipball/master" class="btn">Download .zip</a>
+      <a href="https://github.com/dolymood/mobile-router.js/tarball/master" class="btn">Download .tar.gz</a>
+    </section>
+
+    <section class="main-content">
+      <h1>
+<a id="m--lightweight-single-page-bone-for-mobile-web-app轻量级web端单页面骨架" class="anchor" href="#m--lightweight-single-page-bone-for-mobile-web-app%E8%BD%BB%E9%87%8F%E7%BA%A7web%E7%AB%AF%E5%8D%95%E9%A1%B5%E9%9D%A2%E9%AA%A8%E6%9E%B6" aria-hidden="true"><span class="octicon octicon-link"></span></a>M — Lightweight single page bone for mobile web App.轻量级web端单页面骨架</h1>
+
+<p><a href="https://npmjs.org/package/mobile-router.js"><img src="https://img.shields.io/npm/v/mobile-router.js.svg?style=flat" alt="NPM Version"></a>
+<a href="https://npmjs.org/package/mobile-router.js"><img src="https://img.shields.io/npm/dm/mobile-router.js.svg?style=flat" alt="NPM Downloads"></a></p>
+
+<p><a href="http://demo.aijc.net/js/M/examples/">DEMO</a></p>
+
+<p><a href="http://demo.aijc.net/js/M/examples/requirejs/">require.js DEMO</a></p>
+
+<h3>
+<a id="优势" class="anchor" href="#%E4%BC%98%E5%8A%BF" aria-hidden="true"><span class="octicon octicon-link"></span></a>优势：</h3>
+
+<ul>
+<li><p>使用简单、方便、轻量，基于 <a href="https://developer.mozilla.org/en-US/docs/Web/Guide/API/DOM/Manipulating_the_browser_history">history</a>、<a href="https://developer.mozilla.org/en-US/docs/WindowEventHandlers.onpopstate">window.onpopstate</a>。</p></li>
+<li><p>无依赖，可与其他框架（库）搭配自由使用，例如：<code>jquery</code>, <code>zepto</code>, <code>iscroll</code>等。</p></li>
+<li><p>任意选择字符串式模板引擎，当然最简单的就是自己拼接字符串了；同时支持异步（远程获取模板，或者去请求数据在前端构建模板）；可配置是否缓存结果模板。</p></li>
+<li><p>考虑后端渲染首屏的情况，只需要按结构输出响应的片段即可，利于<code>SEO</code>，且可以实现前后端模板公用。</p></li>
+<li><p>自动缓存部分画面，可配置缓存数量，默认3个。</p></li>
+<li><p>每个路由都有对应的<code>callback</code>和<code>onDestroy</code>配置方法，分别用于显示了对应画面后的回调以及当该画面销毁时回调。</p></li>
+<li><p>利用<code>CSS animation</code>控制动画变换效果，也可设置关闭动画效果。</p></li>
+<li><p>“保留”浏览器原生<code>hash</code>功能，根据<code>hash</code>，可自由跳转到对应<code>id</code>元素位置。</p></li>
+<li><p>可配置<code>enablePushState</code>决定是否使用<code>pushstate</code>功能，默认启用；不启用的话，仅仅影响的是不产生历史，但是路由依旧好使的，也就是还是基于<code>url</code>的。</p></li>
+</ul>
+
+<h3>
+<a id="一些注意点" class="anchor" href="#%E4%B8%80%E4%BA%9B%E6%B3%A8%E6%84%8F%E7%82%B9" aria-hidden="true"><span class="octicon octicon-link"></span></a>一些注意点：</h3>
+
+<ul>
+<li><p>不管画面是否已缓存在页面中，只要切换回显示了，那么就会调用<code>callback</code>，而<code>callback</code>中大多数情况需要处理监听事件、操作<code>DOM</code>，这时候可根据<code>this.cached</code>来区分；当没有缓存在页面上时为<code>false</code>，或者缓存在页面上了，但是模板更新了，这时候也为<code>false</code>。</p></li>
+<li><p><code>getTemplate</code>配置方法，如果带有参数，那么该参数就是得到模板字符串后的回调函数，一定要回调的；如果没有参数，直接返回模板字符串即可。这样做，主要是为了考虑异步获取（render）模板的场景。</p></li>
+<li><p><code>M.history</code>的默认的 base path 是页面中<code>base</code>元素的<code>href</code>的值，如果没有，则默认是<code>/</code>；也可以在<code>M.history.start()</code>时传入。</p></li>
+<li><p>对于<a href="https://developer.mozilla.org/en-US/docs/Web/Guide/API/DOM/Manipulating_the_browser_history">history</a>、<a href="https://developer.mozilla.org/en-US/docs/WindowEventHandlers.onpopstate">window.onpopstate</a>不支持或者支持不够好的浏览器来说，能够正常匹配对应<code>route</code>，也就是说能够正常调用<code>route</code>配置项中的<code>getTemplate</code>以及<code>callback</code>（<code>onDestroy</code>除外），其他功能都没有，点击链接直接刷新页面。这样就可以在不改变代码的情况下，适配了不支持的浏览器。当然这种情况也可以通过取得<code>M.history.support</code>来判断，如果不支持的话，可以在调用<code>M.history.start</code>时设置参数<code>enablePushState</code>为<code>false</code>也可以，但不建议，因为没有历史记录了。</p></li>
+</ul>
+
+<h3>
+<a id="使用方法" class="anchor" href="#%E4%BD%BF%E7%94%A8%E6%96%B9%E6%B3%95" aria-hidden="true"><span class="octicon octicon-link"></span></a>使用方法：</h3>
+
+<div class="highlight highlight-js"><pre>M.router.init([
+    {
+        path<span class="pl-k">:</span> <span class="pl-s"><span class="pl-pds">'</span>/<span class="pl-pds">'</span></span>,
+        cacheTemplate<span class="pl-k">:</span> <span class="pl-c1">false</span>, <span class="pl-c">// 针对于当前的route，是否缓存模板</span>
+        <span class="pl-en">getTemplate</span>: <span class="pl-k">function</span>() {
+            <span class="pl-k">return</span> <span class="pl-s"><span class="pl-pds">'</span>/index<span class="pl-pds">'</span></span>;
+        },
+        <span class="pl-en">callback</span>: <span class="pl-k">function</span>() {
+            <span class="pl-k">if</span> (<span class="pl-v">this</span>.cached) <span class="pl-k">return</span>;
+            <span class="pl-c">// 处理操作...</span>
+        },
+        <span class="pl-en">onDestroy</span>: <span class="pl-k">function</span>() {
+            <span class="pl-c">// 例如，处理一些解绑操作，销毁和DOM关联</span>
+        }
+    },
+    {
+        path<span class="pl-k">:</span> <span class="pl-s"><span class="pl-pds">'</span>/c/:paramName<span class="pl-pds">'</span></span>,
+        cacheTemplate<span class="pl-k">:</span> <span class="pl-c1">false</span>, <span class="pl-c">// 针对于当前的route，是否缓存模板</span>
+        <span class="pl-en">getTemplate</span>: <span class="pl-k">function</span>(<span class="pl-smi">cb</span>) {
+            <span class="pl-c">// 这里模拟异步得到模板内容</span>
+            <span class="pl-k">var</span> that <span class="pl-k">=</span> <span class="pl-v">this</span>;
+            <span class="pl-c">// that.params 参数信息</span>
+            <span class="pl-c">// that.query query信息</span>
+            <span class="pl-c1">setTimeout</span>(<span class="pl-k">function</span>() {
+                cb(<span class="pl-s"><span class="pl-pds">'</span>/c/<span class="pl-pds">'</span></span> <span class="pl-k">+</span> that.params.paramName);
+            }, <span class="pl-c1">200</span>);
+        },
+        <span class="pl-en">callback</span>: <span class="pl-k">function</span>(<span class="pl-smi">paramName</span>) {
+            <span class="pl-k">if</span> (<span class="pl-v">this</span>.cached) <span class="pl-k">return</span>;
+            <span class="pl-c">// 处理操作...</span>
+        },
+        <span class="pl-en">onDestroy</span>: <span class="pl-k">function</span>() {
+            <span class="pl-c">// 例如，处理一些解绑操作，销毁和DOM关联</span>
+        }
+    }
+], {
+    <span class="pl-c">/*是否缓存模板*/</span>
+    cacheTemplate<span class="pl-k">:</span> <span class="pl-c1">true</span>,
+
+    <span class="pl-c">/*views容器选择器 如果为空，或者没有符合元素，那么views的容器元素就为body了*/</span>
+    viewsSelector<span class="pl-k">:</span> <span class="pl-s"><span class="pl-pds">'</span><span class="pl-pds">'</span></span>,
+
+    <span class="pl-c">/*view的class*/</span>
+    viewClass<span class="pl-k">:</span> <span class="pl-s"><span class="pl-pds">'</span>page-view<span class="pl-pds">'</span></span>,
+
+    <span class="pl-c">/*是否有动画*/</span>
+    animation<span class="pl-k">:</span> <span class="pl-c1">true</span>,
+    <span class="pl-c">/*有动画的话，动画的类型*/</span>
+    aniClass<span class="pl-k">:</span> <span class="pl-s"><span class="pl-pds">'</span>slide<span class="pl-pds">'</span></span>,
+
+    <span class="pl-c">/*蒙层class 主要是显示loading时的蒙层*/</span>
+    maskClass<span class="pl-k">:</span> <span class="pl-s"><span class="pl-pds">'</span>mask<span class="pl-pds">'</span></span>,
+    <span class="pl-c">/*显示loading*/</span>
+    showLoading<span class="pl-k">:</span> <span class="pl-c1">true</span>,
+
+    <span class="pl-c">/*缓存view数*/</span>
+    cacheViewNum<span class="pl-k">:</span> <span class="pl-c1">3</span>
+});
+
+<span class="pl-c">// 也可以通过这种形式添加</span>
+M.router.get(<span class="pl-s"><span class="pl-pds">'</span>/ddd/{dddID:int}<span class="pl-pds">'</span></span>, <span class="pl-k">function</span>(<span class="pl-smi">dddID</span>) {
+    <span class="pl-c">// 这是 callback 回调</span>
+}, {
+    cacheTemplate<span class="pl-k">:</span> <span class="pl-c1">true</span>,
+    <span class="pl-en">getTemplate</span>: <span class="pl-k">function</span>() {
+        <span class="pl-k">return</span> <span class="pl-s"><span class="pl-pds">'</span>/ddd/<span class="pl-pds">'</span></span> <span class="pl-k">+</span> <span class="pl-v">this</span>.params.dddID;
+    },
+    <span class="pl-en">onDestroy</span>: <span class="pl-k">function</span>() {
+        <span class="pl-c">// destroy</span>
+    }
+});
+
+<span class="pl-c">/* 监听route change */</span>
+<span class="pl-c">/* routeChangeStart 是刚开始的时候被触发，此时还没有调用getTemplate得到模板内容 */</span>
+M.router.on(<span class="pl-s"><span class="pl-pds">'</span>routeChangeStart<span class="pl-pds">'</span></span>, <span class="pl-k">function</span>(<span class="pl-smi">currentRouteState</span>) {
+
+});
+<span class="pl-c">/*已经完成动画切换（如有动画效果的话）显示出来之后触发*/</span>
+M.router.on(<span class="pl-s"><span class="pl-pds">'</span>routeChangeEnd<span class="pl-pds">'</span></span>, <span class="pl-k">function</span>(<span class="pl-smi">currentRouteState</span>) {
+
+});
+
+<span class="pl-c">// 开始 监听history</span>
+M.<span class="pl-c1">history</span>.<span class="pl-c1">start</span>({
+    <span class="pl-c">// base: '/', // base path</span>
+    <span class="pl-c">// enablePushState: true // 启用pushstate</span>
+});
+</pre></div>
+
+<h3>
+<a id="关于配置" class="anchor" href="#%E5%85%B3%E4%BA%8E%E9%85%8D%E7%BD%AE" aria-hidden="true"><span class="octicon octicon-link"></span></a>关于配置</h3>
+
+<p><code>aniClass</code>和<code>cacgeTemplate</code>配置，依次取的是链接元素上的<code>data-xxx</code>-&gt;单个route规则中对一个的配置项-&gt;整体route配置规则中的配置。</p>
+
+<h3>
+<a id="examples中示例" class="anchor" href="#examples%E4%B8%AD%E7%A4%BA%E4%BE%8B" aria-hidden="true"><span class="octicon octicon-link"></span></a>examples中示例</h3>
+
+<ul>
+<li><p><code>index.html</code>: 基本使用，都是默认配置，主要是关于<code>getTemplate</code>的2中方式以及在链接元素加入<code>data-rel=back</code>（反方向动画）配置。</p></li>
+<li><p><code>index2.html</code>: 关闭动画示例。</p></li>
+<li><p><code>index3.html</code>: 不缓存模板示例。</p></li>
+<li><p><code>index4.html</code>: 全局更改动画class示例。</p></li>
+<li><p><code>index5.html</code>: 局部更改动画class的两种方式示例。</p></li>
+<li><p><code>index6.html</code>: 局部更改缓存模板的两种方式示例。</p></li>
+<li><p><code>index7.html</code>: <code>M.history</code>禁用掉pushstate示例。</p></li>
+<li><p><code>requirejs/</code>: 使用 <a href="http://requirejs.org/">require.js</a> 示例</p></li>
+</ul>
+
+<h3>
+<a id="后端渲染" class="anchor" href="#%E5%90%8E%E7%AB%AF%E6%B8%B2%E6%9F%93" aria-hidden="true"><span class="octicon octicon-link"></span></a>后端渲染</h3>
+
+<p>只需要在响应时加入对应的页面结构即可：</p>
+
+<div class="highlight highlight-html"><pre>&lt;<span class="pl-ent">div</span> <span class="pl-e">class</span>=<span class="pl-s"><span class="pl-pds">"</span>page-view<span class="pl-pds">"</span></span>&gt;后端渲染内容&lt;/<span class="pl-ent">div</span>&gt;</pre></div>
+
+<p>这是因为默认第一次初始化时，会查找页面上带有<code>viewClass</code>的元素，如果找到了，且<code>innerHTML</code>不为空，那么就不会再去调用<code>getTemplate</code>来得到模板内容了。</p>
+
+<h3>
+<a id="代码风格" class="anchor" href="#%E4%BB%A3%E7%A0%81%E9%A3%8E%E6%A0%BC" aria-hidden="true"><span class="octicon octicon-link"></span></a>代码风格</h3>
+
+<p>没有用空格，而是用的<code>tab</code>。</p>
+
+<h3>
+<a id="协议" class="anchor" href="#%E5%8D%8F%E8%AE%AE" aria-hidden="true"><span class="octicon octicon-link"></span></a>协议</h3>
+
+<p><a href="https://github.com/dolymood/M/blob/master/LICENSE">MIT</a></p>
+
+      <footer class="site-footer">
+        <span class="site-footer-owner"><a href="https://github.com/dolymood/mobile-router.js">M</a> is maintained by <a href="https://github.com/dolymood">dolymood</a>.</span>
+
+        <span class="site-footer-credits">This page was generated by <a href="https://pages.github.com">GitHub Pages</a> using the <a href="https://github.com/jasonlong/cayman-theme">Cayman theme</a> by <a href="https://twitter.com/jasonlong">Jason Long</a>.</span>
+      </footer>
+
+    </section>
+
+  
+  </body>
+</html>
+
