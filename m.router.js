@@ -285,7 +285,7 @@
 							// 有元素
 							var _el = el;
 							// 克隆新的一份
-							el = Object.create(_el);
+							el = M.Object.create(_el);
 							['cacheTemplate', 'callback', 'getTemplate',
 							 'keys', 'onDestroy', 'pattern', 'regexp'].forEach(function(k) {
 								el[k] = _el[k];
@@ -556,15 +556,15 @@
 			state.element = null;
 			if (state.child) {
 				// state.child的prototype就是当前state
-				Object.setPrototypeOf(state.child, null);
+				M.Object.setPrototypeOf(state.child, null);
 				M.extend(state, state.child);
 			}
-			var p = Object.getPrototypeOf(state);
+			var p = M.Object.getPrototypeOf(state);
 			if (p && p.child) {
 				// prototype 的 child 就是当前的 state
 				p.child = null;
 			}
-			Object.setPrototypeOf(state, null);
+			M.Object.setPrototypeOf(state, null);
 			state = null;
 		},
 

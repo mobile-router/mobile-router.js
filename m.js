@@ -438,6 +438,21 @@
 				}
 				return -1;
 			}
+		},
+
+		Object: {
+			create: Object.create || function(proto) {
+				return {
+					__proto__: proto
+				};
+			},
+			setPrototypeOf: Object.setPrototypeOf || function(object, proto) {
+				object.__proto__ = proto;
+				return object;
+			},
+			getPrototypeOf: Object.getPrototypeOf || function(object) {
+				return object.__proto__;
+			}
 		}
 	});
 
