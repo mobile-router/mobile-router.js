@@ -2,7 +2,8 @@
 	if (typeof define === 'function' && (define.amd || define.cmd)) {
 		define('m.history', function(require) {
 			var M = require('m');
-			return (M.history = factory(win, M));
+			M.history = factory(win, M);
+			return M;
 		});
 	} else {
 		M.history = factory(win, win.M);
