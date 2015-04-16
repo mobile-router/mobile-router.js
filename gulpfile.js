@@ -22,7 +22,11 @@ gulp.task('scripts', ['clean'], function() {
 gulp.task('minscripts', ['scripts'], function() {
   return gulp.src(destJs)
     .pipe(concat('m.min.js'))
-    .pipe(uglify())
+    .pipe(uglify({
+      mangle: {
+        except: ['require', 'exports', 'module']
+      }
+    }))
     .pipe(gulp.dest('build/'));
 });
 
