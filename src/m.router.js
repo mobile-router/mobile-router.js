@@ -75,7 +75,7 @@
 		showLoading: true,
 
 		/*缓存view数*/
-		cacheViewNum: 3
+		cacheViewsNum: 3
 
 	};
 
@@ -134,8 +134,8 @@
 			}
 			M.extend(this.options, options || {});
 			// view的cache数量不能少于1
-			if (this.options.cacheViewNum < 1) {
-				this.options.cacheViewNum = 1;
+			if (this.options.cacheViewsNum < 1) {
+				this.options.cacheViewsNum = 1;
 			}
 			maskEle.className = this.options.maskClass;
 			maskEle.innerHTML = '<i class="' + this.options.maskClass + '-loading"></i>';
@@ -519,15 +519,15 @@
 		 * 检查views 移除不需要缓存在页面上的元素
 		 */
 		checkPageViews: function() {
-			var cacheViewNum = this.options.cacheViewNum;
-			if (pagesCache.length <= cacheViewNum) return;
+			var cacheViewsNum = this.options.cacheViewsNum;
+			if (pagesCache.length <= cacheViewsNum) return;
 			// 当前的index
 			var curIndex = M.Array.indexOfByKey(pagesCache, this.pageViewState, 'path');
 			var newLeft = 0;
 			var newRight = 0;
-			newLeft = curIndex - Math.floor((cacheViewNum - 1) / 2);
+			newLeft = curIndex - Math.floor((cacheViewsNum - 1) / 2);
 			if (newLeft < 0) newLeft = 0;
-			newRight = cacheViewNum - 1 + newLeft;
+			newRight = cacheViewsNum - 1 + newLeft;
 			if (newRight > pagesCache.length - 1) {
 				// 左侧继续向左移动
 				newLeft -= newRight - pagesCache.length + 1;
