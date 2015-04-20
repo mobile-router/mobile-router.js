@@ -1,4 +1,4 @@
-M — Lightweight single page bone for mobile web App.轻量级web端单页面骨架
+mobile-router.js — A lightweight single page bone for mobile web App
 =
 
 
@@ -6,108 +6,91 @@ M — Lightweight single page bone for mobile web App.轻量级web端单页面�
 [![NPM Downloads][downloads-image]][downloads-url]
 
 
-[DEMO](http://demo.aijc.net/js/M/examples/)
+[DEMO](http://demo.aijc.net/js/M/examples/) - [source code](https://github.com/dolymood/mobile-router.js/blob/master/examples/index.html)
 
-[require.js DEMO](http://demo.aijc.net/js/M/examples/requirejs/)
+[require.js DEMO](http://demo.aijc.net/js/M/examples/requirejs/) - [source code](https://github.com/dolymood/mobile-router.js/blob/master/examples/requirejs/index.html)
 
-You can see a simple mobile web app demo [here](https://github.com/dolymood/mobile-router.js-demo)
+The [mobile-router.js-demo](https://github.com/dolymood/mobile-router.js-demo) is a simple mobile web app demo for [mobile-router.js](https://github.com/dolymood/mobile-router.js).
 
-### 优势：
+[中文](https://github.com/dolymood/mobile-router.js/blob/master/README-zh_CN.md)
 
-* 使用简单、方便、轻量，基于 [history](https://developer.mozilla.org/en-US/docs/Web/Guide/API/DOM/Manipulating_the_browser_history)、[window.onpopstate](https://developer.mozilla.org/en-US/docs/WindowEventHandlers.onpopstate)。
+## How can i install it?
 
-* 无依赖，可与其他框架（库）搭配自由使用，例如：`jquery`, `zepto`, `iscroll`等。
+Download a latest build from <https://github.com/dolymood/mobile-router.js/releases> it contains development and minified production files in build/ folder.
 
-* 任意选择字符串式模板引擎，当然最简单的就是自己拼接字符串了；同时支持异步（远程获取模板，或者去请求数据在前端构建模板）；可配置是否缓存结果模板。
+or use npm
 
-* 考虑后端渲染首屏的情况，只需要按结构输出响应的片段即可，利于`SEO`，且可以实现前后端模板公用。
+	npm install mobile-router.js
 
-* 自动缓存部分画面，可配置缓存数量，默认3个。
+or use git clone
 
-* 每个路由都有对应的`callback`和`onDestroy`配置方法，分别用于显示了对应画面后的回调以及当该画面销毁时回调。
+	git clone https://github.com/dolymood/mobile-router.js.git
 
-* 利用`CSS animation`控制动画变换效果，也可设置关闭动画效果。
-
-* “保留”浏览器原生`hash`功能，根据`hash`，可自由跳转到对应`id`元素位置。
-
-* 可配置`enablePushState`决定是否使用`pushstate`功能，默认启用；不启用的话，仅仅影响的是不产生历史，但是路由依旧好使的，也就是还是基于`url`的。
-
-### 一些注意点：
-
-* 不管画面是否已缓存在页面中，只要切换回显示了，那么就会调用`callback`，而`callback`中大多数情况需要处理监听事件、操作`DOM`，这时候可根据`this.cached`来区分；当没有缓存在页面上时为`false`，或者缓存在页面上了，但是模板更新了，这时候也为`false`。
-
-* `getTemplate`配置方法，如果带有参数，那么该参数就是得到模板字符串后的回调函数，一定要回调的；如果没有参数，直接返回模板字符串即可。这样做，主要是为了考虑异步获取（render）模板的场景。
-
-* `M.history`的默认的 base path 是页面中`base`元素的`href`的值，如果没有，则默认是`/`；也可以在`M.history.start()`时传入。
-
-* 对于[history](https://developer.mozilla.org/en-US/docs/Web/Guide/API/DOM/Manipulating_the_browser_history)、[window.onpopstate](https://developer.mozilla.org/en-US/docs/WindowEventHandlers.onpopstate)不支持或者支持不够好的浏览器来说，能够正常匹配对应`route`，也就是说能够正常调用`route`配置项中的`getTemplate`以及`callback`（`onDestroy`除外），其他功能都没有，点击链接直接刷新页面。这样就可以在不改变代码的情况下，适配了不支持的浏览器。当然这种情况也可以通过取得`M.history.support`来判断，如果不支持的话，可以在调用`M.history.start`时设置参数`enablePushState`为`false`也可以，但不建议，因为没有历史记录了。
-
-### 使用方法：
+## How can I use it?
 
 ```js
 M.router.init([
 	{
-		path: '/',
-		cacheTemplate: false, // 针对于当前的route，是否缓存模板
-		getTemplate: function() {
-			return '/index';
+		path: '/', // route path
+		cacheTemplate: false, // cacheTemplate option for the current route
+		aniClass: 'slideup', // switching effects option for the current route
+		getTemplate: function() { // sync
+			return '/index template content';
 		},
 		callback: function() {
-			if (this.cached) return;
-			// 处理操作...
+			if (this.cached) return; // the page was cached in HTML.
+			// do something ...
 		},
 		onDestroy: function() {
-			// 例如，处理一些解绑操作，销毁和DOM关联
+			// destroy
 		}
 	},
 	{
 		path: '/c/:paramName',
-		cacheTemplate: false, // 针对于当前的route，是否缓存模板
-		getTemplate: function(cb) {
-			// 这里模拟异步得到模板内容
+		getTemplate: function(cb) { // async
 			var that = this;
-			// that.params 参数信息
-			// that.query query信息
+			// that.params - params info
+			// that.query - query info
 			setTimeout(function() {
-				cb('/c/' + that.params.paramName);
+				cb('/c/' + that.params.paramName + ' template content');
 			}, 200);
 		},
 		callback: function(paramName) {
 			if (this.cached) return;
-			// 处理操作...
+			// do something ...
 		},
 		onDestroy: function() {
-			// 例如，处理一些解绑操作，销毁和DOM关联
+			// destroy
 		}
 	}
 ], {
-	/*是否缓存模板*/
+	/*cache tempaltes or not*/
 	cacheTemplate: true,
 
-	/*views容器选择器 如果为空，或者没有符合元素，那么views的容器元素就为body了*/
+	/*views container's selector. Default document.body*/
 	viewsSelector: '',
 
-	/*view的class*/
+	/*view class*/
 	viewClass: 'page-view',
 
-	/*是否有动画*/
+	/*use animation or not*/
 	animation: true,
-	/*有动画的话，动画的类型*/
+	/*switching effects*/
 	aniClass: 'slide',
 
-	/*蒙层class 主要是显示loading时的蒙层*/
+	/*mask class for loading*/
 	maskClass: 'mask',
-	/*显示loading*/
+	/*show loading or not*/
 	showLoading: true,
 
-	/*缓存view数*/
-	cacheViewNum: 3
+	/*cache views number. Default 3*/
+	cacheViewsNum: 3
 });
 
-// 也可以通过这种形式添加
+// Or like this
 M.router.get('/ddd/{dddID:int}', function(dddID) {
-	// 这是 callback 回调
-}, {
+	// callback
+}, { // options
 	cacheTemplate: true,
 	getTemplate: function() {
 		return '/ddd/' + this.params.dddID;
@@ -117,63 +100,51 @@ M.router.get('/ddd/{dddID:int}', function(dddID) {
 	}
 });
 
-/* 监听route change */
-/* routeChangeStart 是刚开始的时候被触发，此时还没有调用getTemplate得到模板内容 */
+/* global route change events */
+/* `routeChangeStart` event, trigged before a route change. */
 M.router.on('routeChangeStart', function(currentRouteState) {
 	
 });
-/*已经完成动画切换（如有动画效果的话）显示出来之后触发*/
+/*`routeChangeEnd` event, trigged after a route changed and the page has been shown.*/
 M.router.on('routeChangeEnd', function(currentRouteState) {
 	
 });
 
-// 开始 监听history
+//  start history
 M.history.start({
-	// base: '/', // base path
-	// enablePushState: true // 启用pushstate
+	base: '/', // base path of history. Default the url base in the head of your main html file (<base href="/my-base">) or '/'
+	enablePushState: true // enable pushstate or not
 });
 
 ```
 
-### 关于配置
+## Advantages?
 
-`aniClass`和`cacgeTemplate`配置，依次取的是链接元素上的`data-xxx`->单个route规则中对一个的配置项->整体route配置规则中的配置。
+* Lightweight, Easy to use. Based on [history](https://developer.mozilla.org/en-US/docs/Web/Guide/API/DOM/Manipulating_the_browser_history), [window.onpopstate](https://developer.mozilla.org/en-US/docs/WindowEventHandlers.onpopstate).
 
-### examples中示例
+* No Dependencies. You can use it with `jquery`, `zepto`, `iscroll` or others.
 
-* `index.html`: 基本使用，都是默认配置，主要是关于`getTemplate`的2中方式以及在链接元素加入`data-rel=back`（反方向动画）配置。
+* Cache templates automatically.
 
-* `index2.html`: 关闭动画示例。
+* Good for `SEO`. You can render pages on server.
 
-* `index3.html`: 不缓存模板示例。
+* Cache pages automatically. Default cache's number is `3`.
 
-* `index4.html`: 全局更改动画class示例。
+* `CSS animation` - switching pages.
 
-* `index5.html`: 局部更改动画class的两种方式示例。
+* Enable `pushstate` or not.
 
-* `index6.html`: 局部更改缓存模板的两种方式示例。
+## About SEO
 
-* `index7.html`: `M.history`禁用掉pushstate示例。
-
-* `requirejs/`: 使用 [require.js](http://requirejs.org/) 示例
-
-### 后端渲染
-
-只需要在响应时加入对应的页面结构即可：
+The server can response HTML with cpmplete content
 
 ```html
-<div class="page-view">后端渲染内容</div>
+<div class="page-view"><h2>content rendered by the server</h2></div>
 ```
 
-这是因为默认第一次初始化时，会查找页面上带有`viewClass`的元素，如果找到了，且`innerHTML`不为空，那么就不会再去调用`getTemplate`来得到模板内容了。
+## License
 
-### 代码风格
-
-没有用空格，而是用的`tab`。
-
-### 协议
-
-[MIT](https://github.com/dolymood/M/blob/master/LICENSE)
+The [MIT](https://github.com/dolymood/M/blob/master/LICENSE) License
 
 [npm-image]: https://img.shields.io/npm/v/mobile-router.js.svg?style=flat
 [npm-url]: https://npmjs.org/package/mobile-router.js
