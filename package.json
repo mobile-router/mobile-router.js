@@ -1,6 +1,6 @@
 {
   "name": "mobile-router.js",
-  "version": "1.1.1",
+  "version": "1.2.2",
   "description": "A lightweight single page bone for mobile web App.",
   "main": "m.router.js",
   "scripts": {
@@ -21,5 +21,12 @@
   "bugs": {
     "url": "https://github.com/dolymood/mobile-router.js/issues",
     "email" : "dolymood@gmail.com"
+  },
+  "devDependencies": {
+    "gulp": "^3.8.11",
+    "gulp-concat": "^2.5.2",
+    "gulp-uglify": "^1.2.0",
+    "gulp-minify-css": "^1.0.0",
+    "del": "^1.1.1"
   }
 }
