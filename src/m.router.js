@@ -423,6 +423,18 @@
 			}
 
 			var animation = routerOptions.animation;
+
+			var curAnimation = this.getOption(state, options.state, 'animation');
+			var prevAnimation = routerOptions.animation;
+			if (!first) {
+				prevAnimation = this.getOption(this.pageViewState, options.oldState, 'animation');
+			}
+
+			curAnimation = curAnimation == true || curAnimation == 'true' ? true : false;
+			prevAnimation = prevAnimation == true || prevAnimation == 'true' ? true : false;
+
+			animation = curAnimation && prevAnimation;
+			
 			if (animation) {
 				var aniEnterClass = aniClass;
 				var aniLeaveClass = aniClass;

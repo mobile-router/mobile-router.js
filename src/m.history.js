@@ -129,7 +129,6 @@
 			var hrefTarget = M.getHrefAndTarget(targetEle);
 			targetEle = hrefTarget.target;
 			var href = hrefTarget.href;
-			var parsedUrl = M.parseUrl(href);
 			// 存在 href 且和当前是同源
 			// 且不带 target 且不是以 javascript: 开头
 			if (History.checkUrl(href) && !targetEle.target) {
@@ -176,8 +175,12 @@
 					return;
 				}
 			}
-			this.options.enablePushState &&
-			history[state.replace == 'true' ? 'replaceState' : 'pushState'](state, state.title, state.url);
+			// 如果是允许pushstate 且其dataset中不包含href的话才会改变history
+			// 规则就是：
+			// data-href="newUrl"会被认为是在当前页中切换，也就是局部禁用pushstate 
+			if (this.options.enablePushState && M.isUndefined(state.data.href)) {
+				history[state.replace == 'true' ? 'replaceState' : 'pushState'](state, state.title, state.url);
+			}
 			this.onChange({
 				state: state
 			});

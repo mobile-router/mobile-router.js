@@ -137,11 +137,13 @@ M.history.start({
 
 ### 关于配置
 
-`aniClass`和`cacgeTemplate`配置，依次取的是链接元素上的`data-xxx`->单个route规则中对一个的配置项->整体route配置规则中的配置。
+`animation`、`aniClass`和`cacgeTemplate`配置，依次取的是链接元素上的`data-xxx`->单个route规则中对一个的配置项->整体route配置规则中的配置。
 
 ### examples中示例
 
 * `index.html`: 基本使用，都是默认配置，主要是关于`getTemplate`的2中方式以及在链接元素加入`data-rel=back`（反方向动画）配置。
+
+* `index1.html`: 在"/c"中利用`data-href`达到不更新浏览器地址切换示例，且演示了如何才能局部禁用动画切换效果。
 
 * `index2.html`: 关闭动画示例。
 
