@@ -170,9 +170,10 @@
 
 		/**
 		 * 显示loading
+		 * @param  {Boolean|Undefined} force 是否强制显示loading
 		 */
-		showLoading: function() {
-			if (!this.options.showLoading) return;
+		showLoading: function(force) {
+			if (!this.options.showLoading && !force) return;
 			if (!this.maskEle) {
 				this.maskEle = maskEle;
 				M.body.appendChild(maskEle);
