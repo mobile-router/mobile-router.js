@@ -262,7 +262,10 @@
 		 */
 		createStateObject: function(url, data, title) {
 			if (url) {
-				if (url.charAt(0) === '/') url = url.slice(1);
+				if (url.charAt(0) === '/') {
+					url = url.slice(1);
+					url = this.base + url;
+				}
 			} else {
 				url = M.location.href;
 			}
