@@ -1,6 +1,6 @@
 {
   "name": "mobile-router.js",
-  "version": "1.3.1",
+  "version": "1.3.0",
   "description": "A lightweight single page bone for mobile web App.",
   "main": "m.router.js",
   "scripts": {
