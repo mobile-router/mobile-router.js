@@ -33,6 +33,7 @@ M.router.init([
 	{
 		path: '/', // route path
 		cacheTemplate: false, // cacheTemplate option for the current route
+		animation: true, // animation option for the current route
 		aniClass: 'slideup', // switching effects option for the current route
 		getTemplate: function() { // sync
 			return '/index template content';
