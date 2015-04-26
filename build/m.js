@@ -631,15 +631,12 @@
 		 * @param  {Boolean} checked 是否已经校验过该state
 		 */
 		pushState: function(state, checked) {
-			if (!checked) {
-				if (!this.checkUrl(state.url, state.origin) || state.url === History.getCurrentState().url) {
-					return;
-				}
-			}
+			if (!checked && !this.checkUrl(state.url, state.origin)) return;
+			if (state.url === History.getCurrentState().url) return;
 			// 如果是允许pushstate 且其dataset中不包含href的话才会改变history
 			// 规则就是：
 			// data-href="newUrl"会被认为是在当前页中切换，也就是局部禁用pushstate 
-			if (this.options.enablePushState && M.isUndefined(state.data.href)) {
+			if (this.options.enablePushState && M.isUndefined(state.data.href) && state.url !== M.location.href) {
 				history[state.replace == 'true' ? 'replaceState' : 'pushState'](state, state.title, state.url);
 			}
 			this.onChange({
@@ -676,6 +673,14 @@
 			} else {
 				e.preventDefault();
 				return false;
+			}
+
+			// 对于 有data-rel 是back的 调整其顺序
+			// 一般的场景就是 类似 返回按钮
+			if (type !== 'back' && state.data.rel === 'back') {
+				type = 'back';
+			} else if (type === 'back' && state.data.rel !== 'back' && oldState.data.rel === 'back') {
+				type = 'forward';
 			}
 			M.document.title = state.title;
 			History.index = newIndex;
@@ -765,7 +770,7 @@
 				urlCache.push(url);
 				i = urlCache.length - 1;
 			}
-			stateCache[url] = M.extend(true, stateCache[url], state);
+			stateCache[url] = state;
 			this.clearCache(i);
 			return i;
 		},
@@ -973,9 +978,10 @@
 
 		/**
 		 * 显示loading
+		 * @param  {Boolean|Undefined} force 是否强制显示loading
 		 */
-		showLoading: function() {
-			if (!this.options.showLoading) return;
+		showLoading: function(force) {
+			if (!this.options.showLoading && !force) return;
 			if (!this.maskEle) {
 				this.maskEle = maskEle;
 				M.body.appendChild(maskEle);
@@ -1117,7 +1123,7 @@
 						}
 					}
 					if (M.isString(cacheTemplate)) cacheTemplate = cacheTemplate === 'true';
-					// 这里加上 得到模板 加动画 class 操作
+					// 这里加上 得到模板
 					if (!(cacheTemplate && templateCache[el.path]) && el.getTemplate) {
 						this.trigger('routeChangeStart', el, args);
 						this.showLoading();
@@ -1192,7 +1198,6 @@
 			
 			var enterClass = 'in';
 			var leaveClass = 'out';
-			var initClass = 'init';
 			var initPosClass = leaveClass;
 			var reverseClass = 'reverse';
 			var aniClass = 'ani';
@@ -1211,19 +1216,14 @@
 			}
 
 			// 模板不一样 更新
-			if (!state.cached || template !== state._oldTemplate) {
+			if ((!state.cached && !nowView) || template !== state._oldTemplate) {
 				M.innerHTML(_pageViewEle, template);
 				state.cached = false;
 			}
 
 			// 重置class
 			M.removeClass(_pageViewEle, allClass);
-			M.addClass(_pageViewEle, routerOptions.viewClass + ' ' + initPosClass);
-
-			if (first) {
-				// 第一次初始化的时候 加上初始化class
-				enterClass += ' ' + initClass;
-			}
+			M.addClass(_pageViewEle, routerOptions.viewClass);
 
 			var animation = routerOptions.animation;
 
@@ -1236,7 +1236,7 @@
 			curAnimation = curAnimation == true || curAnimation == 'true' ? true : false;
 			prevAnimation = prevAnimation == true || prevAnimation == 'true' ? true : false;
 
-			animation = curAnimation && prevAnimation;
+			animation = curAnimation && prevAnimation && !first;
 			
 			if (animation) {
 				var aniEnterClass = aniClass;
@@ -1258,10 +1258,15 @@
 			if (pageViewState) {
 				M.removeClass(pageViewState.element, allClass);
 				M.addClass(pageViewState.element, leaveClass);
+				// reflow
+				pageViewState.element.offsetWidth = pageViewState.element.offsetWidth;
 			}
+			
 			// 移去 initPosClass
 			M.removeClass(_pageViewEle, initPosClass);
 			M.addClass(_pageViewEle, enterClass);
+			// reflow
+			_pageViewEle.offsetWidth = _pageViewEle.offsetWidth;
 			
 			if (!state.cached) {
 				// 增加对hash处理 有时候浏览器不能滚动到响应的
@@ -1290,7 +1295,7 @@
 				entered = true;
 				// 取消监听事件
 				_pageViewEle.removeEventListener(aniEndName, aniEnd);
-				M.removeClass(_pageViewEle, aniEnterClass + ' ' + initClass);
+				M.removeClass(_pageViewEle, aniEnterClass);
 				endCall(_pageViewEle);
 				checkPageViews();
 
@@ -1474,13 +1479,7 @@
 			// 第一次
 			first = true;
 		}
-		// 对于 有data-rel 是back的 调整其顺序
-		// 一般的场景就是 类似 返回按钮
-		if (type !== 'back' && state.data.rel === 'back') {
-			type = 'back';
-		} else if (type === 'back' && state.data.rel !== 'back' && oldState.data.rel === 'back') {
-			type = 'forward';
-		}
+
 		var url = state.url;
 		var path = history.getPath(url);
 		// 如果path为空 但是有base 说明 可以path为/
