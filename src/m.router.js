@@ -315,7 +315,7 @@
 						}
 					}
 					if (M.isString(cacheTemplate)) cacheTemplate = cacheTemplate === 'true';
-					// 这里加上 得到模板 加动画 class 操作
+					// 这里加上 得到模板
 					if (!(cacheTemplate && templateCache[el.path]) && el.getTemplate) {
 						this.trigger('routeChangeStart', el, args);
 						this.showLoading();
@@ -390,7 +390,6 @@
 			
 			var enterClass = 'in';
 			var leaveClass = 'out';
-			var initClass = 'init';
 			var initPosClass = leaveClass;
 			var reverseClass = 'reverse';
 			var aniClass = 'ani';
@@ -409,19 +408,14 @@
 			}
 
 			// 模板不一样 更新
-			if (!state.cached || template !== state._oldTemplate) {
+			if ((!state.cached && !nowView) || template !== state._oldTemplate) {
 				M.innerHTML(_pageViewEle, template);
 				state.cached = false;
 			}
 
 			// 重置class
 			M.removeClass(_pageViewEle, allClass);
-			M.addClass(_pageViewEle, routerOptions.viewClass + ' ' + initPosClass);
-
-			if (first) {
-				// 第一次初始化的时候 加上初始化class
-				enterClass += ' ' + initClass;
-			}
+			M.addClass(_pageViewEle, routerOptions.viewClass);
 
 			var animation = routerOptions.animation;
 
@@ -434,7 +428,7 @@
 			curAnimation = curAnimation == true || curAnimation == 'true' ? true : false;
 			prevAnimation = prevAnimation == true || prevAnimation == 'true' ? true : false;
 
-			animation = curAnimation && prevAnimation;
+			animation = curAnimation && prevAnimation && !first;
 			
 			if (animation) {
 				var aniEnterClass = aniClass;
@@ -456,10 +450,15 @@
 			if (pageViewState) {
 				M.removeClass(pageViewState.element, allClass);
 				M.addClass(pageViewState.element, leaveClass);
+				// reflow
+				pageViewState.element.offsetWidth = pageViewState.element.offsetWidth;
 			}
+			
 			// 移去 initPosClass
 			M.removeClass(_pageViewEle, initPosClass);
 			M.addClass(_pageViewEle, enterClass);
+			// reflow
+			_pageViewEle.offsetWidth = _pageViewEle.offsetWidth;
 			
 			if (!state.cached) {
 				// 增加对hash处理 有时候浏览器不能滚动到响应的
@@ -488,7 +487,7 @@
 				entered = true;
 				// 取消监听事件
 				_pageViewEle.removeEventListener(aniEndName, aniEnd);
-				M.removeClass(_pageViewEle, aniEnterClass + ' ' + initClass);
+				M.removeClass(_pageViewEle, aniEnterClass);
 				endCall(_pageViewEle);
 				checkPageViews();
 
@@ -672,13 +671,7 @@
 			// 第一次
 			first = true;
 		}
-		// 对于 有data-rel 是back的 调整其顺序
-		// 一般的场景就是 类似 返回按钮
-		if (type !== 'back' && state.data.rel === 'back') {
-			type = 'back';
-		} else if (type === 'back' && state.data.rel !== 'back' && oldState.data.rel === 'back') {
-			type = 'forward';
-		}
+
 		var url = state.url;
 		var path = history.getPath(url);
 		// 如果path为空 但是有base 说明 可以path为/

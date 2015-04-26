@@ -170,15 +170,12 @@
 		 * @param  {Boolean} checked 是否已经校验过该state
 		 */
 		pushState: function(state, checked) {
-			if (!checked) {
-				if (!this.checkUrl(state.url, state.origin) || state.url === History.getCurrentState().url) {
-					return;
-				}
-			}
+			if (!checked && !this.checkUrl(state.url, state.origin)) return;
+			if (state.url === History.getCurrentState().url) return;
 			// 如果是允许pushstate 且其dataset中不包含href的话才会改变history
 			// 规则就是：
 			// data-href="newUrl"会被认为是在当前页中切换，也就是局部禁用pushstate 
-			if (this.options.enablePushState && M.isUndefined(state.data.href)) {
+			if (this.options.enablePushState && M.isUndefined(state.data.href) && state.url !== M.location.href) {
 				history[state.replace == 'true' ? 'replaceState' : 'pushState'](state, state.title, state.url);
 			}
 			this.onChange({
@@ -215,6 +212,14 @@
 			} else {
 				e.preventDefault();
 				return false;
+			}
+
+			// 对于 有data-rel 是back的 调整其顺序
+			// 一般的场景就是 类似 返回按钮
+			if (type !== 'back' && state.data.rel === 'back') {
+				type = 'back';
+			} else if (type === 'back' && state.data.rel !== 'back' && oldState.data.rel === 'back') {
+				type = 'forward';
 			}
 			M.document.title = state.title;
 			History.index = newIndex;
@@ -304,7 +309,7 @@
 				urlCache.push(url);
 				i = urlCache.length - 1;
 			}
-			stateCache[url] = M.extend(true, stateCache[url], state);
+			stateCache[url] = state;
 			this.clearCache(i);
 			return i;
 		},

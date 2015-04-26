@@ -3,9 +3,9 @@ html, body {overflow:hidden;height:100%;}
 body {position:relative;-webkit-user-select:none;user-select:none;-ms-touch-action:none;}
 
 /*页面loading*/
-.mask {z-index:10;top:0;right:0;bottom:0;left:0;position:fixed;background:rgba(0, 0, 0, .35);}
+.mask {z-index:10;top:0;right:0;bottom:0;left:0;position:fixed;background:rgba(0, 0, 0, .35);opacity:1;-webkit-animation-duration:225ms;-webkit-animation-name:fadein;animation-duration:225ms;animation-name:fadein;}
 .mask-loading {top:0;right:0;bottom:0;left:0;position:absolute;margin:auto;display:block;width:100px;height:60px;line-height:60px;text-align:center;border-radius:10px;background:rgba(0, 0, 0, .9);font-style:normal;}
-.mask-loading:before {content:"加载中...";color:#fff;font-size:14px;}
+.mask-loading:before {content:"Loading...";color:#fff;font-size:14px;}
 
 .ani {-webkit-animation:.3s ease-in-out;-webkit-animation-fill-mode:both;animation:.3s ease-in-out;animation-fill-mode:both;}
 
@@ -26,16 +26,13 @@ body {position:relative;-webkit-user-select:none;user-select:none;-ms-touch-acti
 /*后退方向离开*/
 .slide.out.reverse {-webkit-animation-name:slideouttoright;animation-name:slideouttoright;}
 
-/*初始化的时候 还是需要加上一点动画的 这样是为了触发animationend事件 */
-.ani.init {-webkit-animation-name:liter;-webkit-animation-duration:.1s;animation-name:liter;animation-duration:.1s;}
-
-@-webkit-keyframes liter {
-	from { -webkit-transform: translate3d(0, 0, 1px); }
-	to { -webkit-transform: translate3d(0, 0, 0); }
+@-webkit-keyframes fadein {
+	from { opacity: 0; }
+	to { opacity: 1; }
 }
-@keyframes liter {
-	from { transform: translate3d(0, 0, 1px); }
-	to { transform: translate3d(0, 0, 0); }
+@keyframes fadein {
+	from { opacity: 0; }
+	to { opacity: 1; }
 }
 
 @-webkit-keyframes slideinfromright {
