@@ -113,7 +113,7 @@
 				path: '/c',
 				getTemplate: function(cb) {
 					setTimeout(function() {
-						cb('<div style="margin:20px;" class="btns"><a href="#" class="btn" data-href="/c/1">/c/1</a><a href="#" class="btn" data-href="/c/2">/c/2</a><a href="#" class="btn" data-href="/c/3">/c/3</a><p>/c</p></div>');
+						cb('<div style="margin:20px;" class="btns"><a href="#" class="btn" data-href="c/1">/c/1</a><a href="#" class="btn" data-href="c/2">/c/2</a><a href="#" class="btn" data-href="c/3">/c/3</a><p>/c</p></div>');
 					}, 500);
 				},
 				callback: function() {
@@ -126,7 +126,7 @@
 				getTemplate: function() {
 					// this.params
 					// this.query
-					return '<div style="margin:20px;" class="btns"><a href="#" class="btn" data-href="/c/1">/c/1</a><a href="#" class="btn" data-href="/c/2">/c/2</a><a href="#" class="btn" data-href="/c/3">/c/3</a><p>' + this.params.cid + '</p></div>';
+					return '<div style="margin:20px;" class="btns"><a href="#" class="btn" data-href="c/1">/c/1</a><a href="#" class="btn" data-href="c/2">/c/2</a><a href="#" class="btn" data-href="c/3">/c/3</a><p>' + this.params.cid + '</p></div>';
 				},
 				callback: function() {
 					// console.log('/c', this, arguments);
