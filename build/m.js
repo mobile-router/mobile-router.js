@@ -770,7 +770,7 @@
 				urlCache.push(url);
 				i = urlCache.length - 1;
 			}
-			stateCache[url] = state;
+			stateCache[url] = M.extend(true, stateCache[url], state);
 			this.clearCache(i);
 			return i;
 		},
