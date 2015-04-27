@@ -129,9 +129,9 @@ M.history.start({
 
 * Good for `SEO`. You can render pages on server.
 
-* Cache pages automatically. Default cache's number is `3`.
+* Cache pages automatically. Default cache pages number is `3`.
 
-* `CSS animation` - switching pages.
+* Switching pages use `CSS animation`.
 
 * Enable `pushstate` or not.
 
