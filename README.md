@@ -39,7 +39,7 @@ M.router.init([
 			return '/index template content';
 		},
 		callback: function() {
-			if (this.cached) return; // the page was cached in HTML.
+			if (this.cached) return; // the page was cached in document.
 			// do something ...
 		},
 		onDestroy: function() {
