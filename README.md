@@ -145,7 +145,7 @@ The server can response HTML with cpmplete content
 
 ## License
 
-The [MIT](https://github.com/dolymood/M/blob/master/LICENSE) License
+The [MIT](https://github.com/dolymood/mobile-router.js/blob/master/LICENSE) License
 
 [npm-image]: https://img.shields.io/npm/v/mobile-router.js.svg?style=flat
 [npm-url]: https://npmjs.org/package/mobile-router.js
