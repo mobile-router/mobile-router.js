@@ -411,7 +411,7 @@
 		},
 
 		Array: {
-			/*只有当前数组不存在此元素时只添加它*/
+			/*只有当前数组不存在此元素时才添加它*/
 			ensure: function(target, item) {
 				if (target.indexOf(item) === -1) {
 					return target.push(item);

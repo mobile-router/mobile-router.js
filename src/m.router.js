@@ -604,6 +604,14 @@
 		},
 
 		/**
+		 * 获取模板缓存对象
+		 * @return {Object} 模板缓存对象
+		 */
+		getTemplateCache: function() {
+			return templateCache;
+		},
+
+		/**
 		 * 导航到url
 		 * @param  {String}           url  导航到的url
 		 * @param  {Object|Undefined} data 可选附加数据
