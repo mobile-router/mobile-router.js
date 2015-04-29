@@ -25,13 +25,15 @@
 <p><a href="https://npmjs.org/package/mobile-router.js"><img src="https://img.shields.io/npm/v/mobile-router.js.svg?style=flat" alt="NPM Version"></a>
 <a href="https://npmjs.org/package/mobile-router.js"><img src="https://img.shields.io/npm/dm/mobile-router.js.svg?style=flat" alt="NPM Downloads"></a></p>
 
+<p><a href="http://mrdocs.aijc.net/">Online docs</a></p>
+
 <p><a href="http://demo.aijc.net/js/M/examples/">DEMO</a> - <a href="https://github.com/dolymood/mobile-router.js/blob/master/examples/index.html">source code</a></p>
 
 <p><a href="http://demo.aijc.net/js/M/examples/requirejs/">require.js DEMO</a> - <a href="https://github.com/dolymood/mobile-router.js/blob/master/examples/requirejs/index.html">source code</a></p>
 
 <p>The <a href="https://github.com/dolymood/mobile-router.js-demo">mobile-router.js-demo</a> is a simple mobile web app demo for <a href="https://github.com/dolymood/mobile-router.js">mobile-router.js</a>.</p>
 
-<p><a href="https://github.com/dolymood/mobile-router.js/blob/master/README-zh_CN.md">中文</a></p>
+<p><a href="https://github.com/dolymood/mobile-router.js/blob/master/README-zh_CN.md">中文 README</a></p>
 
 <h2>
 <a id="how-can-i-install-it" class="anchor" href="#how-can-i-install-it" aria-hidden="true"><span class="octicon octicon-link"></span></a>How can i install it?</h2>
@@ -55,12 +57,13 @@
     {
         path<span class="pl-k">:</span> <span class="pl-s"><span class="pl-pds">'</span>/<span class="pl-pds">'</span></span>, <span class="pl-c">// route path</span>
         cacheTemplate<span class="pl-k">:</span> <span class="pl-c1">false</span>, <span class="pl-c">// cacheTemplate option for the current route</span>
+        animation<span class="pl-k">:</span> <span class="pl-c1">true</span>, <span class="pl-c">// animation option for the current route</span>
         aniClass<span class="pl-k">:</span> <span class="pl-s"><span class="pl-pds">'</span>slideup<span class="pl-pds">'</span></span>, <span class="pl-c">// switching effects option for the current route</span>
         <span class="pl-en">getTemplate</span>: <span class="pl-k">function</span>() { <span class="pl-c">// sync</span>
             <span class="pl-k">return</span> <span class="pl-s"><span class="pl-pds">'</span>/index template content<span class="pl-pds">'</span></span>;
         },
         <span class="pl-en">callback</span>: <span class="pl-k">function</span>() {
-            <span class="pl-k">if</span> (<span class="pl-v">this</span>.cached) <span class="pl-k">return</span>; <span class="pl-c">// the page was cached in HTML.</span>
+            <span class="pl-k">if</span> (<span class="pl-v">this</span>.cached) <span class="pl-k">return</span>; <span class="pl-c">// the page was cached in document.</span>
             <span class="pl-c">// do something ...</span>
         },
         <span class="pl-en">onDestroy</span>: <span class="pl-k">function</span>() {
@@ -147,8 +150,8 @@ M.<span class="pl-c1">history</span>.<span class="pl-c1">start</span>({
 <li><p>No Dependencies. You can use it with <code>jquery</code>, <code>zepto</code>, <code>iscroll</code> or others.</p></li>
 <li><p>Cache templates automatically.</p></li>
 <li><p>Good for <code>SEO</code>. You can render pages on server.</p></li>
-<li><p>Cache pages automatically. Default cache's number is <code>3</code>.</p></li>
-<li><p><code>CSS animation</code> - switching pages.</p></li>
+<li><p>Cache pages automatically. Default cache pages number is <code>3</code>.</p></li>
+<li><p>Switching pages use <code>CSS animation</code>.</p></li>
 <li><p>Enable <code>pushstate</code> or not.</p></li>
 </ul>
 
