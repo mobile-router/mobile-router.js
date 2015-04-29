@@ -41,7 +41,9 @@
 	};
 	var getHash = function(loc) {
 		if (!loc) loc = location;
-		return loc.hash.substr(1);
+		var hash = loc.hash;
+		if (hash.charAt(0) === '#') hash = hash.substr(1);
+		return hash;
 	};
 	// 解析location或者a信息
 	var parseLocation = function(loc) {
@@ -411,7 +413,7 @@
 		},
 
 		Array: {
-			/*只有当前数组不存在此元素时只添加它*/
+			/*只有当前数组不存在此元素时才添加它*/
 			ensure: function(target, item) {
 				if (target.indexOf(item) === -1) {
 					return target.push(item);
@@ -1409,6 +1411,14 @@
 				}
 				match[j] = stateObj.params[key.name] = val;
 			}
+		},
+
+		/**
+		 * 获取模板缓存对象
+		 * @return {Object} 模板缓存对象
+		 */
+		getTemplateCache: function() {
+			return templateCache;
 		},
 
 		/**
