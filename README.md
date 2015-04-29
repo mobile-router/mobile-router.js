@@ -39,7 +39,7 @@ M.router.init([
 			return '/index template content';
 		},
 		callback: function() {
-			if (this.cached) return; // the page was cached in HTML.
+			if (this.cached) return; // the page was cached in document.
 			// do something ...
 		},
 		onDestroy: function() {
@@ -129,9 +129,9 @@ M.history.start({
 
 * Good for `SEO`. You can render pages on server.
 
-* Cache pages automatically. Default cache's number is `3`.
+* Cache pages automatically. Default cache pages number is `3`.
 
-* `CSS animation` - switching pages.
+* Switching pages use `CSS animation`.
 
 * Enable `pushstate` or not.
 
@@ -145,7 +145,7 @@ The server can response HTML with cpmplete content
 
 ## License
 
-The [MIT](https://github.com/dolymood/M/blob/master/LICENSE) License
+The [MIT](https://github.com/dolymood/mobile-router.js/blob/master/LICENSE) License
 
 [npm-image]: https://img.shields.io/npm/v/mobile-router.js.svg?style=flat
 [npm-url]: https://npmjs.org/package/mobile-router.js

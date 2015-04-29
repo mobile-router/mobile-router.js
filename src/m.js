@@ -41,7 +41,9 @@
 	};
 	var getHash = function(loc) {
 		if (!loc) loc = location;
-		return loc.hash.substr(1);
+		var hash = loc.hash;
+		if (hash.charAt(0) === '#') hash = hash.substr(1);
+		return hash;
 	};
 	// 解析location或者a信息
 	var parseLocation = function(loc) {
