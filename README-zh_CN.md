@@ -5,6 +5,7 @@ mobile-router.js — A lightweight single page bone for mobile web App.轻量级
 [![NPM Version][npm-image]][npm-url]
 [![NPM Downloads][downloads-image]][downloads-url]
 
+[Online docs](http://mrdocs.aijc.net/)
 
 [DEMO](http://demo.aijc.net/js/M/examples/)
 

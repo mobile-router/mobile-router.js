@@ -5,6 +5,7 @@ mobile-router.js — A lightweight single page bone for mobile web App
 [![NPM Version][npm-image]][npm-url]
 [![NPM Downloads][downloads-image]][downloads-url]
 
+[Online docs](http://mrdocs.aijc.net/)
 
 [DEMO](http://demo.aijc.net/js/M/examples/) - [source code](https://github.com/dolymood/mobile-router.js/blob/master/examples/index.html)
 
@@ -12,7 +13,7 @@ mobile-router.js — A lightweight single page bone for mobile web App
 
 The [mobile-router.js-demo](https://github.com/dolymood/mobile-router.js-demo) is a simple mobile web app demo for [mobile-router.js](https://github.com/dolymood/mobile-router.js).
 
-[中文](https://github.com/dolymood/mobile-router.js/blob/master/README-zh_CN.md)
+[中文 README](https://github.com/dolymood/mobile-router.js/blob/master/README-zh_CN.md)
 
 ## How can i install it?
 
