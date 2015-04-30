@@ -72,7 +72,7 @@ M.router.init([
 	/*views container's selector. Default document.body*/
 	viewsSelector: '',
 
-	/*view class*/
+	/*view class. Each page view will have a default class `page-view`, the `viewClass` option's value will be appended to the page view element's class */
 	viewClass: 'page-view',
 
 	/*use animation or not*/
