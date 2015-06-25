@@ -122,7 +122,7 @@ M.history.start({
 
 ## Advantages?
 
-* Lightweight, Easy to use. Based on [history](https://developer.mozilla.org/en-US/docs/Web/Guide/API/DOM/Manipulating_the_browser_history), [window.onpopstate](https://developer.mozilla.org/en-US/docs/WindowEventHandlers.onpopstate).
+* Lightweight, Easy. Based on [history](https://developer.mozilla.org/en-US/docs/Web/Guide/API/DOM/Manipulating_the_browser_history), [window.onpopstate](https://developer.mozilla.org/en-US/docs/WindowEventHandlers.onpopstate).
 
 * No Dependencies. You can use it with `jquery`, `zepto`, `iscroll` or others.
 
