@@ -261,7 +261,17 @@
 		},
 		_remove: function(cls) {
 			this._set((' ' + this + ' ').replace(' ' + cls + ' ', ' '));
-		}
+		},
+		__set: function(cls) {
+      cls = cls.trim()
+      var node = this.node
+      if (rsvg.test(node)) {
+        //SVG元素的className是一个对象 SVGAnimatedString { baseVal="", animVal=""}，只能通过set/getAttribute操作
+        node.setAttribute("class", cls)
+      } else {
+        node.className = cls
+      }
+    }
 	}
 
 	function ClassList(node) {
@@ -326,7 +336,7 @@
 			};
 			var script = document.createElement('script');
 			var hyperspace = document.createDocumentFragment();
-			
+
 			function parseHTML(html) {
 				if (typeof html !== 'string') html = html + '';
 				html = html.replace(rxhtml, '<$1></$2>').trim();
@@ -366,7 +376,7 @@
 				ele.appendChild(f);
 				f = null;
 			};
-			
+
 		}();
 	}
 
@@ -461,6 +471,7 @@
 	return M;
 
 });
+
 ;(function(win, factory) {
 	if (typeof define === 'function' && (define.amd || define.cmd)) {
 		define('m.history', function(require) {
