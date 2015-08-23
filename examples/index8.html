@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>mobile-router.js — Lightweight single page bone for mobile web App.轻量级web端单页面骨架</title>
+	<meta charset="utf-8">
+	<meta name="keywords" content="mobile-router, mobile-router.js, single page app framework,spa framework,mobile spa framework,single page app bone,spa bone,mobile spa bone,轻量级web端单页面骨架,移动web端单页面框架,单页面框架,单页面骨架">
+	<meta name="description" content="Lightweight single page bone for mobile web App.轻量级web端单页面骨架">
+	
+	<!-- viewport 设置 -->
+	<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+	<!-- 允许全屏模式 -->
+	<meta name="apple-mobile-web-app-capable" content="yes">
+	<!-- 设置状态栏颜色 -->
+	<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+	<!-- 主屏标题 -->
+	<meta name="apple-mobile-web-app-title" content="M demo">
+	<!-- 忽略自动识别电话号码 -->
+	<meta content="telephone=no" name="format-detection">
+	<!-- 忽略识别邮箱 -->
+	<meta content="email=no" name="format-detection">
+	<!-- 智能 app 广告条 -->
+	<!-- <meta name="apple-itunes-app" content="app-id=myAppStoreID, affiliate-data=myAffiliateData, app-argument=myURL">  -->
+
+	<!-- 针对手持设备优化，主要是针对一些老的不识别 viewport 的浏览器，比如黑莓 -->
+	<meta name="HandheldFriendly" content="true">
+	<!-- 微软的老式浏览器 -->
+	<meta name="MobileOptimized" content="320">
+	<!-- uc 强制竖屏 -->
+	<meta name="screen-orientation" content="portrait">
+	<!-- QQ 强制竖屏 -->
+	<meta name="x5-orientation" content="portrait">
+	<!-- UC 强制全屏 -->
+	<meta name="full-screen" content="yes">
+	<!-- QQ 强制全屏 -->
+	<meta name="x5-fullscreen" content="true">
+	<!-- UC 应用模式 -->
+	<meta name="browsermode" content="application">
+	<!-- QQ 应用模式 -->
+	<meta name="x5-page-mode" content="app">
+	<!-- windows phone 点击无高光 -->
+	<meta name="msapplication-tap-highlight" content="no">
+	<!-- 避免百度这样的玩意转码 -->
+	<meta http-equiv="Cache-Control" content="no-siteapp">
+	<script type="text/javascript" src="./lib/zepto.js"></script>
+	<script type="text/javascript" src="./lib/fastclick.js"></script>
+	<!-- <link rel="stylesheet" type="text/css" href="../build/m.css"> -->
+	<!-- <link rel="stylesheet" type="text/css" href="../build/m.animate.css"> -->
+	<link rel="stylesheet" type="text/css" href="../src/m.css">
+	<link rel="stylesheet" type="text/css" href="../src/m.animate.css">
+	<style type="text/css">
+	* {margin:0;padding:0;}
+	
+	.nav {z-index:5;left:0;top:0;position:absolute;width:100%;background:#13a2d7;}
+	li {display:inline-block;vertical-align:top;}
+	a {padding:14px 20px;display:block;}
+	
+	.page-view {top:46px;bottom:0;height:auto;background:-webkit-linear-gradient(top,#ace7ef,#e7d9c5);background:linear-gradient(top,#ace7ef,#e7d9c5);}
+	#link {margin-top:1000px;}
+	</style>
+	<!-- <base href="/examples/"> -->
+	<base href="/private/mobile-router.js/examples/">
+</head>
+<body>
+	<ul class="nav">
+		<li><a href="" data-title="M — Lightweight single page bone for mobile web App.轻量级移动端单页面骨架">/</a></li>
+		<li><a href="d" data-title="d">d</a></li>
+		<li><a href="c" data-title="c">c</a></li>
+		<li><a href="b/1" data-title="b">b/1</a></li>
+		<li><a href="b/2" data-title="b">b/2</a></li>
+		<li><a href="b/3" data-title="b">b/3</a></li>
+	</ul>
+	<div class="page-view"><div>/<p><a href="#link">link</a></p></div><h3 id="link">cc</h3></div>
+	<!-- <script type="text/javascript" src="../build/m.js"></script> -->
+	<script type="text/javascript" src="../src/m.js"></script>
+	<script type="text/javascript" src="../src/m.history.js"></script>
+	<script type="text/javascript" src="../src/m.router.js"></script>
+	<script type="text/javascript">
+		FastClick.attach(document.body);
+
+		M.router.init([
+			{
+				path: '/',
+				getTemplate: function() {
+					return '<div>/<p><a href="#link">link</a></p></div><h3 id="link">cc</h3>';
+				},
+				callback: function() {
+					// console.log('/', this, arguments);
+				},
+				onDestroy: function() {
+					// 当前被销毁时调用
+					// console.log(this.element.id)
+				}
+			},
+			{
+				path: '/b/:bid',
+				getTemplate: function(cb) {
+					var path = this.path.substr(1);
+					setTimeout(function() {
+						var lis = '';
+						var t;
+						for (var i = 1; i <= 4; i++) {
+							t = path + '/s' + i;
+							lis += '<li><a href="' + t + '">/' + t + '</a></li>'
+						}
+						cb(
+							'<ul class="nav">' + lis + '</ul>'
+						);
+					}, 200);
+				},
+				callback: function() {
+					console.log('callback:/b', this, arguments);
+				},
+				onDestroy: function() {
+					// 当前被销毁时调用
+					console.log('destroy:/b', this, arguments);
+				},
+
+				children: {
+					viewsSelector: '',
+					viewClass: 'sub-view-b',
+					maskClass: 'mask',
+					showLoading: true,
+					cacheViewsNum: 3,
+					cacheTemplate: true,
+					animation: true,
+					aniClass: 'slide',
+
+					routes: [
+						{
+							path: '/:subB',
+							getTemplate: function(cb) {
+								var that = this;
+								setTimeout(function() {
+									cb('<div>' + that.path + '<p>sub content</p></div>');
+								}, 200);
+							},
+							callback: function() {
+								console.log('sub callback b', this, arguments);
+							},
+							onDestroy: function() {
+								console.log('sub destroy b', this, arguments);
+							}
+						}
+					]
+					
+				}
+			},
+			{
+				path: '/c',
+				getTemplate: function(cb) {
+					setTimeout(function() {
+						cb(
+							'<ul class="nav">' +
+								'<li><a href="javascript:;" data-href="c/1">/c/1</a></li>' +
+								'<li><a href="javascript:;" data-href="c/2">/c/2</a></li>' +
+								'<li><a href="javascript:;" data-href="c/3">/c/3</a></li>' +
+								'<li><a href="javascript:;" data-href="c/4">/c/4</a></li>' +
+							'</ul>'
+						);
+					}, 200);
+				},
+				callback: function() {
+					console.log('callback:/c', this, arguments);
+				},
+				onDestroy: function() {
+					// 当前被销毁时调用
+					console.log('destroy:/c', this, arguments);
+				},
+
+				children: {
+					aniClass: 'slideup',
+					cacheTemplate: false,
+
+					routes: [
+						{
+							path: '/{cid:int}',							
+							getTemplate: function(cb) {
+								var that = this;
+								setTimeout(function() {
+									cb('<div>/c/' + that.params.cid + '<p>sub content</p></div>');
+								}, 200);
+							},
+							callback: function() {
+								console.log('sub callback c', this, arguments);
+							},
+							onDestroy: function() {
+								console.log('sub destroy c', this, arguments);
+							}
+						}
+					]
+					
+				}
+			},
+			{
+				path: '/d',
+				getTemplate: function(cb) {
+					setTimeout(function() {
+						cb(
+							'<ul class="nav">' +
+								'<li><a href="d/1">/d/1</a></li>' +
+								'<li><a href="d/2">/d/2</a></li>' +
+								'<li><a href="d/3">/d/3</a></li>' +
+								'<li><a href="d/4">/d/4</a></li>' +
+							'</ul>'
+						);
+					}, 200);
+				},
+				callback: function() {
+					console.log('callback:/d', this, arguments);
+				},
+				onDestroy: function() {
+					// 当前被销毁时调用
+					console.log('destroy:/d', this, arguments);
+				},
+
+				children: {
+					viewClass: 'sub-view2',
+					cacheViewsNum: 3,// 子缓存数
+
+					routes: [
+						{
+							path: '/{did:int}',							
+							getTemplate: function(cb) {
+								var that = this;
+								setTimeout(function() {
+									cb('<div>/d/' + that.params.did + '<p>sub content</p></div>');
+								}, 200);
+							},
+							callback: function() {
+								console.log('sub callback d', this, arguments);
+							},
+							onDestroy: function() {
+								console.log('sub destroy d', this, arguments);
+							}
+						}
+					]
+					
+				}
+			}
+		], {
+			cacheViewsNum: 2,
+			error: function() {
+				M.router.navigate('/');
+			}
+		});
+
+		M.router.on('routeChangeStart', function() {
+			// console.log('routeChangeStart', arguments);
+		});
+
+		M.router.on('routeChangeEnd', function() {
+			// console.log('routeChangeEnd', arguments);
+		});
+
+		M.history.start();
+		M.history.on('change', function(type, state, oldState) {
+			// console.log(type, state, oldState);
+		});
+	</script>
+</body>
+</html>
