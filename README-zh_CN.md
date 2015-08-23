@@ -17,6 +17,8 @@ mobile-router.js — A lightweight single page bone for mobile web App.轻量级
 
 * 使用简单、方便、轻量，基于 [history](https://developer.mozilla.org/en-US/docs/Web/Guide/API/DOM/Manipulating_the_browser_history)、[window.onpopstate](https://developer.mozilla.org/en-US/docs/WindowEventHandlers.onpopstate)。
 
+* 支持路由视图嵌套。
+
 * 无依赖，可与其他框架（库）搭配自由使用，例如：`jquery`, `zepto`, `iscroll`等。
 
 * 任意选择字符串式模板引擎，当然最简单的就是自己拼接字符串了；同时支持异步（远程获取模板，或者去请求数据在前端构建模板）；可配置是否缓存结果模板。
@@ -64,7 +66,7 @@ M.router.init([
 		}
 	},
 	{
-		path: '/c/:paramName',
+		path: '/m/:paramName',
 		cacheTemplate: false, // 针对于当前的route，是否缓存模板
 		getTemplate: function(cb) {
 			// 这里模拟异步得到模板内容
@@ -72,7 +74,7 @@ M.router.init([
 			// that.params 参数信息
 			// that.query query信息
 			setTimeout(function() {
-				cb('/c/' + that.params.paramName);
+				cb('/m/' + that.params.paramName);
 			}, 200);
 		},
 		callback: function(paramName) {
@@ -81,6 +83,67 @@ M.router.init([
 		},
 		onDestroy: function() {
 			// 例如，处理一些解绑操作，销毁和DOM关联
+		}
+	},
+	{ // 嵌套！！
+		path: '/b/:bid',
+		getTemplate: function(cb) {
+			var path = this.path.substr(1);
+			setTimeout(function() {
+				var lis = '';
+				var t;
+				for (var i = 1; i <= 4; i++) {
+					t = path + '/s' + i;
+					lis += '<li><a href="' + t + '">/' + t + '</a></li>';
+					// 或者：（这样的话 不会对地址栏有影响）
+					// lis += '<li><a href="#" data-href="' + t + '">/' + t + '</a></li>';
+				}
+				cb(
+					'<ul class="nav">' + lis + '</ul>'
+				);
+			}, 200);
+		},
+		callback: function() {
+			console.log('callback:/b', this, arguments);
+		},
+		onDestroy: function() {
+			// 当前被销毁时调用
+			console.log('destroy:/b', this, arguments);
+		},
+
+		children: {
+			/* 这些配置项 默认继承自 parent */
+			viewsSelector: '',
+			viewClass: 'sub-view-b',
+			maskClass: 'mask',
+			showLoading: true,
+			cacheViewsNum: 3,
+			cacheTemplate: true,
+			animation: true,
+			aniClass: 'slide',
+
+			routes: [
+				{
+					path: '/:subB', // '/b/:bid' + '/:subB'
+					/* 这里依旧可以设置 */
+					cacheTemplate: false, // 针对于当前的route，是否缓存模板
+					animation: true, // 针对于当前的route，是否有动画
+					aniClass: 'slideup', // 针对于当前的route，动画类型（效果）
+					getTemplate: function(cb) {
+						var that = this;
+						setTimeout(function() {
+							cb('<div>' + that.path + '<p>sub content</p></div>');
+						}, 200);
+					},
+					callback: function() {
+						console.log('sub callback b', this, arguments);
+					},
+					onDestroy: function() {
+						console.log('sub destroy b', this, arguments);
+					}
+				}
+			]
+			
 		}
 	}
 ], {
@@ -108,7 +171,7 @@ M.router.init([
 });
 
 // 也可以通过这种形式添加
-M.router.get('/ddd/{dddID:int}', function(dddID) {
+M.router.add('/ddd/{dddID:int}', function(dddID) {
 	// 这是 callback 回调
 }, {
 	cacheTemplate: true,
@@ -159,6 +222,8 @@ M.history.start({
 * `index6.html`: 局部更改缓存模板的两种方式示例。
 
 * `index7.html`: `M.history`禁用掉pushstate示例。
+
+* `index8.html`: 嵌套路由视图示例。
 
 * `requirejs/`: 使用 [require.js](http://requirejs.org/) 示例
 

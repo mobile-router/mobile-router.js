@@ -33,9 +33,9 @@ or use git clone
 M.router.init([
 	{
 		path: '/', // route path
-		cacheTemplate: false, // cacheTemplate option for the current route
-		animation: true, // animation option for the current route
-		aniClass: 'slideup', // switching effects option for the current route
+		cacheTemplate: false, // cacheTemplate option for current route
+		animation: true, // animation option for current route
+		aniClass: 'slideup', // switching effects option for current route
 		getTemplate: function() { // sync
 			return '/index template content';
 		},
@@ -48,13 +48,13 @@ M.router.init([
 		}
 	},
 	{
-		path: '/c/:paramName',
+		path: '/m/:paramName',
 		getTemplate: function(cb) { // async
 			var that = this;
 			// that.params - params info
 			// that.query - query info
 			setTimeout(function() {
-				cb('/c/' + that.params.paramName + ' template content');
+				cb('/m/' + that.params.paramName + ' template content');
 			}, 200);
 		},
 		callback: function(paramName) {
@@ -63,6 +63,67 @@ M.router.init([
 		},
 		onDestroy: function() {
 			// destroy
+		}
+	},
+	{ // Nested routes & views!
+		path: '/b/:bid',
+		getTemplate: function(cb) {
+			var path = this.path.substr(1);
+			setTimeout(function() {
+				var lis = '';
+				var t;
+				// build sub view link
+				for (var i = 1; i <= 4; i++) {
+					t = path + '/s' + i;
+					lis += '<li><a href="' + t + '">/' + t + '</a></li>';
+					// or: (looks like set `enablePushState:false`, do not change `location`)
+					// lis += '<li><a href="#" data-href="' + t + '">/' + t + '</a></li>';
+				}
+				cb(
+					'<ul class="nav">' + lis + '</ul>'
+				);
+			}, 200);
+		},
+		callback: function() {
+			console.log('callback:/b', this, arguments);
+		},
+		onDestroy: function() {
+			console.log('destroy:/b', this, arguments);
+		},
+
+		children: { // config for nested routes & views!
+			/* these configs, default inherit form parent config */
+			viewsSelector: '',
+			viewClass: 'sub-view-b',
+			maskClass: 'mask',
+			showLoading: true,
+			cacheViewsNum: 3,
+			cacheTemplate: true,
+			animation: true,
+			aniClass: 'slide',
+
+			routes: [
+				{
+					path: '/:subB', // '/b/:bid/:subB'
+					/* config for current sub route */
+					cacheTemplate: false,
+					animation: true,
+					aniClass: 'slideup',
+					getTemplate: function(cb) {
+						var that = this;
+						setTimeout(function() {
+							cb('<div>' + that.path + '<p>sub content</p></div>');
+						}, 200);
+					},
+					callback: function() {
+						console.log('sub callback b', this, arguments);
+					},
+					onDestroy: function() {
+						console.log('sub destroy b', this, arguments);
+					}
+				}
+			]
+			
 		}
 	}
 ], {
@@ -90,7 +151,7 @@ M.router.init([
 });
 
 // Or like this
-M.router.get('/ddd/{dddID:int}', function(dddID) {
+M.router.add('/ddd/{dddID:int}', function(dddID) {
 	// callback
 }, { // options
 	cacheTemplate: true,
@@ -124,6 +185,8 @@ M.history.start({
 
 * Lightweight, Easy. Based on [history](https://developer.mozilla.org/en-US/docs/Web/Guide/API/DOM/Manipulating_the_browser_history), [window.onpopstate](https://developer.mozilla.org/en-US/docs/WindowEventHandlers.onpopstate).
 
+* Nested routes & views.
+
 * No Dependencies. You can use it with `jquery`, `zepto`, `iscroll` or others.
 
 * Cache templates automatically.
@@ -135,6 +198,28 @@ M.history.start({
 * Switching pages use `CSS animation`.
 
 * Enable `pushstate` or not.
+
+## About examples/
+
+* `index.html`: basic usage, `getTemplate` config, and `data-rel=back` attribute config on link element for reverse animation direction.
+
+* `index1.html`: `data-href` attribute config on link for disable `pushState`, and disable `animation` of one route.
+ 
+* `index2.html`: disable `animation`.
+
+* `index3.html`: disable `cacheTemplate`.
+
+* `index4.html`: set global `aniClass`.
+
+* `index5.html`: set `aniClass` in two ways.
+
+* `index6.html`: set `cacheTemplate` of one route.
+
+* `index7.html`: set `M.history` config `enablePushState=false` for disable `pushState`.
+
+* `index8.html`: nested routes and views.
+
+* `requirejs/`: use [require.js](http://requirejs.org/)
 
 ## About SEO
 

@@ -42,13 +42,6 @@
 	// url模式参数匹配
 	var placeholder = /([:*])(\w+)|\{(\w+)(?:\:((?:[^{}\\]+|\\.|\{(?:[^{}\\]+|\\.)*\})+))?\}/g;
 
-	// 类型route缓存 其实只有一种 get
-	var routerCache = {};
-	// page的route state缓存
-	var pagesCache = [];
-	// 模板缓存
-	var templateCache = {};
-
 	// 是否已初始化
 	var inited = false;
 	
@@ -80,6 +73,7 @@
 		cacheViewsNum: 3
 
 	};
+	var defOptionsKeys = M.Object.keys(defOptions);
 
 	// 蒙层元素
 	var maskEle = M.document.createElement('div');
@@ -98,17 +92,483 @@
 		}
 		return 'animationend';
 	}());
-	
+
+	function RouteView(parentRouteObj, options) {
+		if (parentRouteObj) {
+			parentRouteObj.$routeView = this;
+		} else {
+			this.$root = true;
+		}
+
+		this.routes = [];
+
+		/*蒙层元素*/
+		this.maskEle = null;
+		/*当前pageview状态对象*/
+		this.pageViewState = null;
+		/*views容器*/
+		this.viewsContainer = null;
+
+		this.options = options;
+
+		// page的route state缓存
+		this.pagesCache = [];
+		// 模板缓存
+		this.templateCache = {};
+
+		// view的cache数量不能少于1
+		if (this.options.cacheViewsNum < 1) {
+			this.options.cacheViewsNum = 1;
+		}
+		if (!parentRouteObj) {
+			this.setViewsContainer();
+		}
+	}
+	M.extend(RouteView.prototype, {
+
+		route: function(path, query, options) {
+			var states = this.routes;
+			if (!options) options = {};
+			var ret = false;
+			var that = this;
+
+			for (var i = 0, el; el = states[i]; i++) {
+				var args = path.match(el.regexp);
+				if (args) {
+					if (el.element) {
+						// 一条路由规则可能会对应着N个pageview
+						var finded = false;
+						while (el) {
+							if (el.path === path) {
+								finded = true;
+								break;
+							}
+							if (el.$child) {
+								el = el.$child;
+							} else {
+								break;
+							}
+						}
+						if (!finded) {
+							// 有元素
+							var _el = el;
+							// 克隆新的一份
+							el = M.Object.create(_el);
+							['cacheTemplate', 'callback', 'getTemplate',
+							 'keys', 'onDestroy', 'pattern', 'regexp', '$routeView'].forEach(function(k) {
+								el[k] = _el[k];
+							});
+							el.$child = null;
+							_el.$child = el;
+							states[i] = el;
+						}
+					}
+					el.query = query || {};
+					el.path = path;
+					el.params = {};
+					el.historyOptions = options;
+					var keys = el.keys;
+					args.shift();
+					if (keys.length) {
+						_parseArgs(args, el);
+					}
+
+					// 缓存模板
+					var cacheTemplate = that.getOption(el, options.state, 'cacheTemplate');
+					if (options.first) {
+						var initView = that.viewsContainer.getElementsByClassName(defViewClass)[0];
+						if (initView) {
+							that.templateCache[el.path] = initView.innerHTML;
+							cacheTemplate = true;
+						}
+					}
+					if (M.isString(cacheTemplate)) cacheTemplate = cacheTemplate === 'true';
+					// 这里加上 得到模板
+					if (!(cacheTemplate && that.templateCache[el.path]) && el.getTemplate) {
+						Router.trigger('routeChangeStart', el, args);
+						that.showLoading();
+						if (el.getTemplate.length) {
+							// 有参数 则需要回调 主要场景是异步得到模板
+							// 或者先需要数据 然后利用模板引擎得到结果字符串
+							el.getTemplate(getTemplateCb);
+						} else {
+							getTemplateCb(el.getTemplate());
+						}
+					} else {
+						Router.trigger('routeChangeStart', el, args);
+						getTemplateCb(that.templateCache[el.path]);
+					}
+					ret = true;
+				} else {
+					if (el.$routeView) {
+						ret = el.$routeView.route(path, query, options);
+					}
+				}
+				if (ret) {
+					break;
+				}
+			}
+			return ret;
+
+			function getTemplateCb(template) {
+				that.getTemplateCb(el, template, args);
+			}
+		},
+
+		setViewsContainer: function(ele) {
+			// 根据viewsSelector得到views容器元素
+			var viewsSelector = this.options.viewsSelector;
+			var backContainer = ele || M.document;
+			var viewsContainer = viewsSelector && backContainer.querySelector(viewsSelector);
+			if (!viewsContainer) {
+				viewsContainer = ele || backContainer.body;
+			}
+			this.viewsContainer = viewsContainer;
+		},
+
+		/**
+		 * 设置是否有动画
+		 * @param  {Boolean} ani 是否有动画
+		 */
+		animate: function(ani) {
+			this.options.animation = !!ani;
+		},
+
+		/**
+		 * 显示loading
+		 * @param  {Boolean|Undefined} force 是否强制显示loading
+		 */
+		showLoading: function(force) {
+			if (!this.options.showLoading && !force) return;
+			if (!this.maskEle) {
+				this.initMaskEle();
+			}
+			this.maskEle.style.visibility = 'visible';
+		},
+
+		initMaskEle: function() {
+			this.maskEle = maskEle.cloneNode();
+			this.maskEle.className = this.options.maskClass;
+			this.maskEle.innerHTML = '<i class="' + this.options.maskClass + '-loading"></i>';
+			this.viewsContainer.appendChild(this.maskEle);
+		},
+
+		/**
+		 * 隐藏loading
+		 */
+		hideLoading: function() {
+			if (this.maskEle) {
+				this.maskEle.style.visibility = 'hidden';
+			}
+		},
+
+		/**
+		 * 得到option中key的值 优先级：
+		 * historyState.data > routeState > routesState
+		 * @param  {Object} routeState   路由state对象
+		 * @param  {Object} historyState 历史state对象
+		 * @param  {String} key          键key
+		 * @return {Any}                 对应的键值
+		 */
+		getOption: function(routeState, historyState, key) {
+			if (!routeState && !historyState) return undefined;
+			if (!key) return undefined;
+			var val;
+			if (historyState) {
+				val = historyState.data[key];
+			}
+			if (M.isUndefined(val)) {
+				val = routeState[key];
+				if (M.isUndefined(val)) {
+					val = this.options[key];
+				}
+			}
+			return val;
+		},
+
+		/**
+		 * 得到模板后callback
+		 * @param  {Object} state    route对象
+		 * @param  {String} template 模板字符串
+		 * @param  {Array}  args     可变变量对应的值
+		 */
+		getTemplateCb: function(state, template, args) {
+			this.hideLoading();
+			state._oldTemplate = this.templateCache[state.path];
+			this.templateCache[state.path] = template;
+
+			var that = this;
+			var options = state.historyOptions; // 带过来的options
+			var first = options.first || !this.pageViewState;
+			var nowView;
+			var id = M.getUIDByKey(state.path);
+			if (first) {
+				options.first = first;
+				nowView = this.viewsContainer.getElementsByClassName(defViewClass)[0];
+			}
+			
+			var enterClass = 'in';
+
+			var _pageViewEle = M.document.getElementById(id);
+			if (!_pageViewEle) {
+				// 创建新的元素
+				_pageViewEle = nowView || M.document.createElement('div');
+				_pageViewEle.id = id;
+				// 是新的
+				state.cached = false;
+				!nowView && this.viewsContainer.appendChild(_pageViewEle);
+			} else {
+				state.cached = true;
+			}
+
+			// 模板不一样 更新
+			if ((!state.cached && !nowView) || template !== state._oldTemplate) {
+				M.innerHTML(_pageViewEle, template);
+				state.cached = false;
+			}
+
+			if (state.$routeView) {
+				var shown = M.hasClass(_pageViewEle, enterClass);
+				if (shown) {
+					state.$routeView._transView(null, state.$routeView.pageViewState, options, _endCall);
+					return;
+				} else if (state.$routeView.pageViewState) {
+					state.$routeView._transView(null, state.$routeView.pageViewState, options);
+				}
+			}
+			this._transView(_pageViewEle, state, options, endCall);
+			function endCall(element) {
+				state.element = element;
+				var index = M.Array.indexOfByKey(that.pagesCache, state,  'path');
+				if (~index) {
+					// 移掉当前的
+					that.pagesCache.splice(index, 1);
+				}
+				that.pagesCache.push(state);
+				that.pageViewState = state;
+				_endCall();
+			}
+			function _endCall() {
+				state.callback.apply(state, args);
+				Router.trigger('routeChangeEnd', state, args);
+				if (state.$routeView) {
+					state.$routeView.setViewsContainer(state.element);
+				}
+			}
+		},
+
+		_transView: function(_pageViewEle, state, options, endCall) {
+			var enterClass = 'in';
+			var leaveClass = 'out';
+			var initPosClass = leaveClass;
+			var reverseClass = 'reverse';
+			var aniClass = 'ani';
+			var allClass = enterClass + ' ' + reverseClass;
+
+			var pageViewState = this.pageViewState;
+			var that = this;
+
+			if (_pageViewEle) {
+				// 重置class
+				M.removeClass(_pageViewEle, allClass);
+				M.addClass(_pageViewEle, defViewClass + ' ' + this.options.viewClass);
+			}
+			
+			var animation = this._shouldAni(this.options.animation, state, options);
+			animation = animation && !!endCall;
+			
+			if (animation) {
+				var aniEnterClass = aniClass;
+				var aniLeaveClass = aniClass;
+				aniEnterClass += ' ' + this.getOption(state, options.state, 'aniClass');
+				if (!options.first) {
+					aniLeaveClass += ' ' + this.getOption(pageViewState, options.oldState, 'aniClass');
+				}
+
+				enterClass = aniEnterClass + ' ' + enterClass;
+				leaveClass = aniLeaveClass + ' ' + leaveClass;
+			}
+
+			if (options.direction === 'back') {
+				enterClass += ' ' + reverseClass;
+				leaveClass += ' ' + reverseClass;
+			}
+
+			if (pageViewState) {
+				M.removeClass(pageViewState.element, allClass);
+				M.addClass(pageViewState.element, leaveClass);
+				// reflow
+				pageViewState.element.offsetWidth = pageViewState.element.offsetWidth;
+			}
+			
+			if (_pageViewEle) {
+				// 移去 initPosClass
+				M.removeClass(_pageViewEle, initPosClass);
+				M.addClass(_pageViewEle, enterClass);
+				// reflow
+				_pageViewEle.offsetWidth = _pageViewEle.offsetWidth;
+			}
+			
+			if (!state.cached) {
+				// 增加对hash处理 有时候浏览器不能滚动到响应的
+				// 带有hash id 的元素位置
+				var hash = options.state.hash;
+				var scrollToEle;
+				if (hash) {
+					scrollToEle = M.document.getElementById(hash);
+					scrollToEle && scrollToEle.scrollIntoView();
+				}
+			}
+
+			var entered = false;
+			var leaved = false;
+
+			if (!animation) {
+				// 没有动画
+				entered = true;
+				leaved = true;
+				endCall && endCall(_pageViewEle);
+				checkPageViews();
+				return;
+			}
+			_pageViewEle && _pageViewEle.addEventListener(aniEndName, function aniEnd() {
+				// enter了
+				entered = true;
+				// 取消监听事件
+				_pageViewEle.removeEventListener(aniEndName, aniEnd);
+				M.removeClass(_pageViewEle, aniEnterClass);
+				endCall && endCall(_pageViewEle);
+				checkPageViews();
+
+				aniEnd = null;
+				_pageViewEle = null;
+			});
+			pageViewState && pageViewState.element.addEventListener(aniEndName, function aniEnd2() {
+				// leave了
+				leaved = true;
+				// 取消监听事件
+				pageViewState.element.removeEventListener(aniEndName, aniEnd2);
+				M.removeClass(pageViewState.element, aniLeaveClass);
+				if (!_pageViewEle) {
+					endCall && endCall();
+					that.pageViewState = null;
+				}
+				// pageViewState.element.style.display = 'none';
+				checkPageViews();
+
+				aniEnd2 = null;
+				pageViewState = null;
+			});
+
+			function checkPageViews() {
+				// 还有没完成的
+				if (!entered || !leaved) return;
+				that.checkPageViews();
+			}
+		},
+
+		_shouldAni: function(animation, state, options) {
+			var curAnimation = this.getOption(state, options.state, 'animation');
+			var prevAnimation = animation;
+			if (!options.first) {
+				prevAnimation = this.getOption(this.pageViewState, options.oldState, 'animation');
+			}
+
+			curAnimation = curAnimation == true || curAnimation == 'true' ? true : false;
+			prevAnimation = prevAnimation == true || prevAnimation == 'true' ? true : false;
+
+			animation = curAnimation && prevAnimation && (!this.$root || !options.first);
+			return animation;
+		},
+
+		/**
+		 * 检查views 移除不需要缓存在页面上的元素
+		 */
+		checkPageViews: function() {
+			var cacheViewsNum = this.options.cacheViewsNum;
+			var pagesCache = this.pagesCache;
+			if (pagesCache.length <= cacheViewsNum) return;
+			// 当前的index
+			var curIndex = M.Array.indexOfByKey(pagesCache, this.pageViewState, 'path');
+			var newLeft = 0;
+			var newRight = 0;
+			newLeft = curIndex - Math.floor((cacheViewsNum - 1) / 2);
+			if (newLeft < 0) newLeft = 0;
+			newRight = cacheViewsNum - 1 + newLeft;
+			if (newRight > pagesCache.length - 1) {
+				// 左侧继续向左移动
+				newLeft -= newRight - pagesCache.length + 1;
+				newRight = pagesCache.length - 1;
+			}
+			while (newLeft > 0) {
+				this.destroyState(pagesCache.shift());
+				newLeft--;
+				newRight--;
+			}
+			while (newRight < pagesCache.length - 1) {
+				this.destroyState(pagesCache.pop());
+			}
+		},
+
+		/**
+		 * 销毁state
+		 * @param  {Object} state route state
+		 */
+		destroyState: function(state) {
+			if (state.$routeView) {
+				// destroy child
+				var _state = state.$routeView.pagesCache.pop();
+				while (_state) {
+					state.$routeView.destroyState(_state);
+					_state = state.$routeView.pagesCache.pop();
+				}
+				// state.$routeView.templateCache = {};
+				state.$routeView.viewsContainer = null;
+				state.$routeView.pageViewState = null;
+				var _ms = state.$routeView.maskEle;
+				_ms && _ms.parentNode.removeChild(_ms);
+				state.$routeView.maskEle = null;
+			}
+			// 如果存在destroy
+			if (M.isFunction(state.onDestroy)) {
+				state.onDestroy();
+			}
+			try {
+				state.element && state.element.parentNode.removeChild(state.element);
+			} catch(e) {
+				debugger;
+			}
+			state.element = null;
+			var p = M.Object.getPrototypeOf(state);
+			if (p && p.$child) {
+				// prototype 的 child 就是当前的 state
+				p.$child = state.$child || null;
+			}
+			if (state.$child) {
+				M.Object.setPrototypeOf(state.$child, p || null);
+				state.$child = null;
+			}
+			M.Object.setPrototypeOf(state, null);
+			state = null;
+		},
+
+		/**
+		 * 获取模板缓存对象
+		 * @return {Object} 模板缓存对象
+		 */
+		getTemplateCache: function() {
+			return this.templateCache;
+		}
+
+		
+	});
 
 	var Router = {
 
 		options: defOptions,
 
-		/*添加到body中的蒙层元素*/
-		maskEle: null,
-
-		/*views容器*/
-		viewsContainer: null,
+		/*出错回调*/
+		errorback: null,
 
 		/**
 		 * 初始化
@@ -122,45 +582,29 @@
 				options = routes;
 				routes = [];
 			}
-			routes.forEach(function(route) {
-				var path = route.path;
-				// 避免和之后的path冲突 这里换成pattern
-				route.pattern = path;
-				delete route.path;
-				this.add(route.method || 'get', path || '/', route.callback, route);
-			}, this);
 			// 如果有error函数
 			if (options && M.isFunction(options.error)) {
 				this.error(options.error);
 				delete options.error;
 			}
 			M.extend(this.options, options || {});
-			// view的cache数量不能少于1
-			if (this.options.cacheViewsNum < 1) {
-				this.options.cacheViewsNum = 1;
-			}
-			maskEle.className = this.options.maskClass;
-			maskEle.innerHTML = '<i class="' + this.options.maskClass + '-loading"></i>';
-
-			// 根据viewsSelector得到views容器元素
-			var viewsSelector = this.options.viewsSelector;
-			var viewsContainer = viewsSelector && M.document.querySelector(viewsSelector);
-			if (!viewsContainer) {
-				viewsContainer = M.document.body;
-			}
-			this.viewsContainer = viewsContainer;
+			this.$routeView = new RouteView(null, this.options);
+			this._add(routes);
 		},
 
 		/**
-		 * 设置是否有动画
-		 * @param  {Boolean} ani 是否有动画
+		 * 判定当前URL与已有状态对象的路由规则是否符合
+		 * @param  {String} path    路由path
+		 * @param  {String} query   路由query
+		 * @param  {Object} options 配置对象
 		 */
-		animate: function(ani) {
-			this.options.animation = !!ani;
+		route: function(path, query, options) {
+			path = path.trim();
+			var finded = this.$routeView.route(path, query, options);
+			if (!finded && this.errorback) {
+				this.errorback(path, query, options);
+			}
 		},
-
-		/*出错回调*/
-		errorback: null,
 
 		/**
 		 * 设置出错回调函数
@@ -170,25 +614,64 @@
 			this.errorback = cb;
 		},
 
-		/**
-		 * 显示loading
-		 * @param  {Boolean|Undefined} force 是否强制显示loading
-		 */
-		showLoading: function(force) {
-			if (!this.options.showLoading && !force) return;
-			if (!this.maskEle) {
-				this.maskEle = maskEle;
-				M.body.appendChild(maskEle);
-			}
-			this.maskEle.style.visibility = 'visible';
+		_add: function(routes, routeView, basePath) {
+			var path;
+			if (!basePath) basePath = '';
+			M.each(routes, function(route) {
+				path = basePath + route.path;
+				// 避免和之后的path冲突 这里换成pattern
+				route.pattern = path;
+				delete route.path;
+				this.add(path || '/', route.callback, route, routeView);
+			}, this);	
 		},
 
 		/**
-		 * 隐藏loading
+		 * 添加一个路由规则
+		 * @param {String}   method   路由方法
+		 * @param {String}   path     路由path 也就是path规则
+		 * @param {Function} callback 对应的进入后回调
+		 * @param {Object}   opts     配置对象
+		 * @param {RouteView}   routeView     RouteView对象
 		 */
-		hideLoading: function() {
-			if (this.maskEle) {
-				this.maskEle.style.visibility = 'hidden';
+		add: function(path, callback, opts, routeView) {
+			if (typeof callback === 'object') {
+				routeView = opts;
+				opts = callback;
+			}
+			if (!routeView) routeView = this.$routeView;
+
+			var array = routeView.routes;
+			if (path.charAt(0) !== '/') {
+				throw 'path必须以/开头';
+			}
+
+			opts = opts || {};
+			opts.callback = callback || M.noop;
+			if (path.length > 2 && path.charAt(path.length - 1) === '/') {
+				path = path.slice(0, -1);
+				opts.last = '/';
+			}
+			M.Array.ensure(array, this._pathToRegExp(path, opts));
+
+			var children = opts.children;
+			if (children) {
+				// sub view
+				var childOptions = {};
+				var _options = this.options;
+				M.each(defOptionsKeys, function(k) {
+					if (k in children) {
+						childOptions[k] = children[k];
+					} else {
+						childOptions[k] = _options[k];
+					}
+				});
+				var subRouteView = new RouteView(opts, childOptions);
+
+				routes = children.routes;
+				delete children.routes;
+				this._add(routes, subRouteView, path);
+				delete opts.children; // 移除掉
 			}
 		},
 
@@ -225,392 +708,6 @@
 			compiled += quoteRegExp(segment) + (opts.strict ? opts.last : '\/?') + '$';
 			opts.regexp = new RegExp(compiled, sensitive ? 'i' : undefined);
 			return opts;
-		},
-
-		/**
-		 * 添加一个路由规则
-		 * @param {String}   method   路由方法
-		 * @param {String}   path     路由path 也就是path规则
-		 * @param {Function} callback 对应的进入后回调
-		 * @param {Object}   opts     配置对象
-		 */
-		add: function(method, path, callback, opts) {
-			var array = routerCache[method.toLowerCase()];
-			if (!array) array = routerCache[method.toLowerCase()] = [];
-			if (path.charAt(0) !== '/') {
-				throw 'path必须以/开头';
-			}
-			if (typeof callback === 'object') {
-				opts = callback;
-			}
-			opts = opts || {};
-			opts.callback = callback || M.noop;
-			if (path.length > 2 && path.charAt(path.length - 1) === '/') {
-				path = path.slice(0, -1);
-				opts.last = '/';
-			}
-			M.Array.ensure(array, this._pathToRegExp(path, opts));
-		},
-		
-		/*当前pageview状态对象*/
-		pageViewState: null,
-		
-		/**
-		 * 判定当前URL与已有状态对象的路由规则是否符合
-		 * @param  {String} method  路由方法
-		 * @param  {String} path    路由path
-		 * @param  {String} query   路由query
-		 * @param  {Object} options 配置对象
-		 */
-		route: function(method, path, query, options) {
-			path = path.trim();
-			var states = routerCache[method];
-			if (!options) options = {};
-
-			for (var i = 0, el; el = states[i++]; ) {
-				var args = path.match(el.regexp);
-				if (args) {
-					if (el.element) {
-						// 一条路由规则可能会对应着N个pageview
-						var finded = false;
-						while (el) {
-							if (el.path === path) {
-								finded = true;
-								break;
-							}
-							if (el.child) {
-								el = el.child;
-							} else {
-								break;
-							}
-						}
-						if (!finded) {
-							// 有元素
-							var _el = el;
-							// 克隆新的一份
-							el = M.Object.create(_el);
-							['cacheTemplate', 'callback', 'getTemplate',
-							 'keys', 'onDestroy', 'pattern', 'regexp'].forEach(function(k) {
-								el[k] = _el[k];
-							});
-							el.child = null;
-							_el.child = el;
-						}
-					}
-					el.query = query || {};
-					el.path = path;
-					el.params = {};
-					el.historyOptions = options;
-					var keys = el.keys;
-					args.shift();
-					if (keys.length) {
-						this._parseArgs(args, el);
-					}
-
-					// 缓存模板
-					var cacheTemplate = this.getOption(el, options.state, 'cacheTemplate');
-					if (options.first) {
-						var initView = M.document.getElementsByClassName(defViewClass)[0];
-						if (initView) {
-							templateCache[el.path] = initView.innerHTML;
-							cacheTemplate = true;
-						}
-					}
-					if (M.isString(cacheTemplate)) cacheTemplate = cacheTemplate === 'true';
-					// 这里加上 得到模板
-					if (!(cacheTemplate && templateCache[el.path]) && el.getTemplate) {
-						this.trigger('routeChangeStart', el, args);
-						this.showLoading();
-						if (el.getTemplate.length) {
-							// 有参数 则需要回调 主要场景是异步得到模板
-							// 或者先需要数据 然后利用模板引擎得到结果字符串
-							el.getTemplate(getTemplateCb);
-						} else {
-							getTemplateCb(el.getTemplate());
-						}
-						return;
-					} else {
-						this.trigger('routeChangeStart', el, args);
-						return getTemplateCb(templateCache[el.path]);
-					}
-				}
-			}
-			if (this.errorback) {
-				this.errorback();
-			}
-
-			function getTemplateCb(template) {
-				Router.getTemplateCb(el, template, args);
-			}
-		},
-
-		/**
-		 * 得到option中key的值 优先级：
-		 * historyState.data > routeState > routesState
-		 * @param  {Object} routeState   路由state对象
-		 * @param  {Object} historyState 历史state对象
-		 * @param  {String} key          键key
-		 * @return {Any}                 对应的键值
-		 */
-		getOption: function(routeState, historyState, key) {
-			if (!routeState && !historyState) return undefined;
-			if (!key) return undefined;
-			var val;
-			if (historyState) {
-				val = historyState.data[key];
-			}
-			if (M.isUndefined(val)) {
-				val = routeState[key];
-				if (M.isUndefined(val)) {
-					val = this.options[key];
-				}
-			}
-			return val;
-		},
-
-		/**
-		 * 得到模板后callback
-		 * @param  {Object} state    route对象
-		 * @param  {String} template 模板字符串
-		 * @param  {Array}  args     可变变量对应的值
-		 */
-		getTemplateCb: function(state, template, args) {
-			this.hideLoading();
-			state._oldTemplate = templateCache[state.path];
-			templateCache[state.path] = template;
-
-			var that = this;
-			var routerOptions = this.options;
-			var pageViewState = this.pageViewState;
-			var options = state.historyOptions; // 带过来的options
-			var first = options.first || !pageViewState;
-			var nowView;
-			var id = M.getUIDByKey(state.path);
-			if (first) {
-				nowView = M.document.getElementsByClassName(defViewClass)[0];
-			}
-			
-			var enterClass = 'in';
-			var leaveClass = 'out';
-			var initPosClass = leaveClass;
-			var reverseClass = 'reverse';
-			var aniClass = 'ani';
-			var allClass = enterClass + ' ' + reverseClass;
-
-			var _pageViewEle = M.document.getElementById(id);
-			if (!_pageViewEle) {
-				// 创建新的元素
-				_pageViewEle = nowView || M.document.createElement('div');
-				_pageViewEle.id = id;
-				// 是新的
-				state.cached = false;
-				!nowView && this.viewsContainer.appendChild(_pageViewEle);
-			} else {
-				state.cached = true;
-			}
-
-			// 模板不一样 更新
-			if ((!state.cached && !nowView) || template !== state._oldTemplate) {
-				M.innerHTML(_pageViewEle, template);
-				state.cached = false;
-			}
-
-			// 重置class
-			M.removeClass(_pageViewEle, allClass);
-			M.addClass(_pageViewEle, defViewClass + ' ' + routerOptions.viewClass);
-
-			var animation = routerOptions.animation;
-
-			var curAnimation = this.getOption(state, options.state, 'animation');
-			var prevAnimation = routerOptions.animation;
-			if (!first) {
-				prevAnimation = this.getOption(this.pageViewState, options.oldState, 'animation');
-			}
-
-			curAnimation = curAnimation == true || curAnimation == 'true' ? true : false;
-			prevAnimation = prevAnimation == true || prevAnimation == 'true' ? true : false;
-
-			animation = curAnimation && prevAnimation && !first;
-			
-			if (animation) {
-				var aniEnterClass = aniClass;
-				var aniLeaveClass = aniClass;
-				if (!first) {
-					aniEnterClass += ' ' + this.getOption(state, options.state, 'aniClass');
-					aniLeaveClass += ' ' + this.getOption(this.pageViewState, options.oldState, 'aniClass');
-				}
-
-				enterClass = aniEnterClass + ' ' + enterClass;
-				leaveClass = aniLeaveClass + ' ' + leaveClass;
-			}
-
-			if (options.direction === 'back') {
-				enterClass += ' ' + reverseClass;
-				leaveClass += ' ' + reverseClass;
-			}
-
-			if (pageViewState) {
-				M.removeClass(pageViewState.element, allClass);
-				M.addClass(pageViewState.element, leaveClass);
-				// reflow
-				pageViewState.element.offsetWidth = pageViewState.element.offsetWidth;
-			}
-			
-			// 移去 initPosClass
-			M.removeClass(_pageViewEle, initPosClass);
-			M.addClass(_pageViewEle, enterClass);
-			// reflow
-			_pageViewEle.offsetWidth = _pageViewEle.offsetWidth;
-			
-			if (!state.cached) {
-				// 增加对hash处理 有时候浏览器不能滚动到响应的
-				// 带有hash id 的元素位置
-				var hash = options.state.hash;
-				var scrollToEle;
-				if (hash) {
-					scrollToEle = M.document.getElementById(hash);
-					scrollToEle && scrollToEle.scrollIntoView();
-				}
-			}
-
-			var entered = false;
-			var leaved = false;
-
-			if (!animation) {
-				// 没有动画
-				entered = true;
-				leaved = true;
-				endCall(_pageViewEle);
-				checkPageViews();
-				return;
-			}
-			_pageViewEle.addEventListener(aniEndName, function aniEnd() {
-				// enter了
-				entered = true;
-				// 取消监听事件
-				_pageViewEle.removeEventListener(aniEndName, aniEnd);
-				M.removeClass(_pageViewEle, aniEnterClass);
-				endCall(_pageViewEle);
-				checkPageViews();
-
-				aniEnd = null;
-				_pageViewEle = null;
-			});
-			pageViewState && pageViewState.element.addEventListener(aniEndName, function aniEnd2() {
-				// leave了
-				leaved = true;
-				// 取消监听事件
-				pageViewState.element.removeEventListener(aniEndName, aniEnd2);
-				M.removeClass(pageViewState.element, aniLeaveClass);
-				// pageViewState.element.style.display = 'none';
-				checkPageViews();
-
-				aniEnd2 = null;
-				pageViewState = null;
-			});
-
-			function endCall(element) {
-				state.element = element;
-				var index = M.Array.indexOfByKey(pagesCache, state,  'path');
-				if (~index) {
-					// 移掉当前的
-					pagesCache.splice(index, 1);
-				}
-				pagesCache.push(state);
-				that.pageViewState = state;
-				state.callback.apply(state, args);
-				that.trigger('routeChangeEnd', state, args);
-			}
-
-			function checkPageViews() {
-				// 还有没完成的
-				if (!entered || !leaved) return;
-				that.checkPageViews();
-			}
-		},
-
-		/**
-		 * 检查views 移除不需要缓存在页面上的元素
-		 */
-		checkPageViews: function() {
-			var cacheViewsNum = this.options.cacheViewsNum;
-			if (pagesCache.length <= cacheViewsNum) return;
-			// 当前的index
-			var curIndex = M.Array.indexOfByKey(pagesCache, this.pageViewState, 'path');
-			var newLeft = 0;
-			var newRight = 0;
-			newLeft = curIndex - Math.floor((cacheViewsNum - 1) / 2);
-			if (newLeft < 0) newLeft = 0;
-			newRight = cacheViewsNum - 1 + newLeft;
-			if (newRight > pagesCache.length - 1) {
-				// 左侧继续向左移动
-				newLeft -= newRight - pagesCache.length + 1;
-				newRight = pagesCache.length - 1;
-			}
-			while (newLeft > 0) {
-				this.destroyState(pagesCache.shift());
-				newLeft--;
-				newRight--;
-			}
-			while (newRight < pagesCache.length - 1) {
-				this.destroyState(pagesCache.pop());
-			}
-		},
-
-		/**
-		 * 销毁state
-		 * @param  {Object} state route state
-		 */
-		destroyState: function(state) {
-			// 如果存在destroy
-			if (M.isFunction(state.onDestroy)) {
-				state.onDestroy();
-			}
-			state.element && state.element.parentNode.removeChild(state.element);
-			state.element = null;
-			if (state.child) {
-				// state.child的prototype就是当前state
-				M.Object.setPrototypeOf(state.child, null);
-				M.extend(state, state.child);
-			}
-			var p = M.Object.getPrototypeOf(state);
-			if (p && p.child) {
-				// prototype 的 child 就是当前的 state
-				p.child = null;
-			}
-			M.Object.setPrototypeOf(state, null);
-			state = null;
-		},
-
-		/**
-		 * 解析match到的参数
-		 * @param  {Array} match    匹配结果
-		 * @param  {Object} stateObj route state对象
-		 */
-		_parseArgs: function(match, stateObj) {
-			var keys = stateObj.keys;
-			for (var j = 0, jn = keys.length; j < jn; j++) {
-				var key = keys[j];
-				var value = match[j] || '';
-				if (typeof key.decode === 'function') {
-					var val = key.decode(value);
-				} else {
-					try {
-						val = JSON.parse(value);
-					} catch (e) {
-						val = value;
-					}
-				}
-				match[j] = stateObj.params[key.name] = val;
-			}
-		},
-
-		/**
-		 * 获取模板缓存对象
-		 * @return {Object} 模板缓存对象
-		 */
-		getTemplateCache: function() {
-			return templateCache;
 		},
 
 		/**
@@ -666,11 +763,6 @@
 
 	};
 
-	// 只需要一种 get
-	Router.get = function(path, callback, opts) {
-		this.add('get', path, callback, opts);
-	};
-
 	// 增加事件机制
 	M.extendByBase(Router);
 
@@ -688,7 +780,7 @@
 		if (path || history.base || first) {
 			if (!path || path !== '/') path = '/' + (path || '');
 			var parsed = parseQuery(path);
-			Router.route('get', parsed.path, parsed.query, {
+			Router.route(parsed.path, parsed.query, {
 				first: first,
 				direction: type,
 				state: state,
@@ -702,6 +794,29 @@
 		if (!pattern) return result;
 		var flag = isOptional ? '?' : '';
 		return result + flag + '(' + pattern + ')' + flag;
+	}
+
+	/**
+	 * 解析match到的参数
+	 * @param  {Array} match    匹配结果
+	 * @param  {Object} stateObj route state对象
+	 */
+	function _parseArgs(match, stateObj) {
+		var keys = stateObj.keys;
+		for (var j = 0, jn = keys.length; j < jn; j++) {
+			var key = keys[j];
+			var value = match[j] || '';
+			if (typeof key.decode === 'function') {
+				var val = key.decode(value);
+			} else {
+				try {
+					val = JSON.parse(value);
+				} catch (e) {
+					val = value;
+				}
+			}
+			match[j] = stateObj.params[key.name] = val;
+		}
 	}
 
 	return Router;

@@ -464,6 +464,15 @@
 			},
 			getPrototypeOf: Object.getPrototypeOf || function(object) {
 				return object.__proto__;
+			},
+			keys: Object.keys || function(object) {
+				var ret = [];
+				for (var k in object) {
+					if (object.hasOwnProperty(k)) {
+						ret.push(k);
+					}
+				}
+				return ret;
 			}
 		}
 	});
