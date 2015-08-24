@@ -92,7 +92,7 @@
 						var lis = '';
 						var t;
 						for (var i = 1; i <= 4; i++) {
-							t = path + '/s' + i;
+							t = path + '/subB' + i;
 							lis += '<li><a href="' + t + '">/' + t + '</a></li>'
 						}
 						cb(
@@ -122,9 +122,17 @@
 						{
 							path: '/:subB',
 							getTemplate: function(cb) {
-								var that = this;
+								var path = this.path.substr(1);
 								setTimeout(function() {
-									cb('<div>' + that.path + '<p>sub content</p></div>');
+									var lis = '';
+									var t;
+									for (var i = 1; i <= 4; i++) {
+										t = path + '/subsubB' + i;
+										lis += '<li><a href="' + t + '">/' + t + '</a></li>'
+									}
+									cb(
+										'<ul class="nav">' + lis + '</ul>'
+									);
 								}, 200);
 							},
 							callback: function() {
@@ -132,6 +140,27 @@
 							},
 							onDestroy: function() {
 								console.log('sub destroy b', this, arguments);
+							},
+
+							children: {
+								viewClass: 'sub-sub-view-b',
+								routes: [
+									{
+										path: '/:subsubB',
+										getTemplate: function(cb) {
+											var that = this;
+											setTimeout(function() {
+												cb('<div>' + that.path + '<p>sub sub content</p></div>');
+											}, 200);
+										},
+										callback: function() {
+											console.log('sub sub callback b', this, arguments);
+										},
+										onDestroy: function() {
+											console.log('sub sub destroy b', this, arguments);
+										}
+									}
+								]
 							}
 						}
 					]
@@ -140,17 +169,15 @@
 			},
 			{
 				path: '/c',
-				getTemplate: function(cb) {
-					setTimeout(function() {
-						cb(
-							'<ul class="nav">' +
-								'<li><a href="javascript:;" data-href="c/1">/c/1</a></li>' +
-								'<li><a href="javascript:;" data-href="c/2">/c/2</a></li>' +
-								'<li><a href="javascript:;" data-href="c/3">/c/3</a></li>' +
-								'<li><a href="javascript:;" data-href="c/4">/c/4</a></li>' +
-							'</ul>'
-						);
-					}, 200);
+				getTemplate: function() {
+					return (
+						'<ul class="nav">' +
+							'<li><a href="javascript:;" data-href="c/1">/c/1</a></li>' +
+							'<li><a href="javascript:;" data-href="c/2">/c/2</a></li>' +
+							'<li><a href="javascript:;" data-href="c/3">/c/3</a></li>' +
+							'<li><a href="javascript:;" data-href="c/4">/c/4</a></li>' +
+						'</ul>'
+					);
 				},
 				callback: function() {
 					console.log('callback:/c', this, arguments);
