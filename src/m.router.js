@@ -366,7 +366,13 @@
 				_endCall();
 			}
 			function _endCall() {
-				state.callback.apply(state, args);
+				var callbackArgs = args.concat();
+				var p = that.$parent;
+				while (p) {
+					callbackArgs.shift();
+					p = p.$parent;
+				}
+				state.callback.apply(state, callbackArgs);
 				Router.trigger('routeChangeEnd', state, args);
 				if (state.$routeView) {
 					state.$routeView.setViewsContainer(state.element);
