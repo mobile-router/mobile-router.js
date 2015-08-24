@@ -469,7 +469,6 @@
 				checkPageViews();
 
 				aniEnd = null;
-				_pageViewEle = null;
 			});
 			pageViewState && pageViewState.element.addEventListener(aniEndName, function aniEnd2() {
 				// leave了
