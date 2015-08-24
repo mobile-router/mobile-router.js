@@ -1,7 +1,7 @@
 a, img {-webkit-touch-callout:none;}
 html, body {overflow:hidden;height:100%;}
 body {position:relative;-webkit-user-select:none;user-select:none;-ms-touch-action:none;}
-
+.overhidden {overflow:hidden!important;}
 /*页面loading*/
 .mask {z-index:10;top:0;right:0;bottom:0;left:0;position:absolute;background:rgba(0, 0, 0, .35);opacity:1;-webkit-animation-duration:225ms;-webkit-animation-name:fadein;animation-duration:225ms;animation-name:fadein;}
 .mask-loading {top:0;right:0;bottom:0;left:0;position:absolute;margin:auto;display:block;width:100px;height:60px;line-height:60px;text-align:center;border-radius:10px;background:rgba(0, 0, 0, .9);font-style:normal;}

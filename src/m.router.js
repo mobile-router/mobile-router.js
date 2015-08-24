@@ -127,6 +127,8 @@
 			this.setViewsContainer();
 		}
 	}
+	var routeKeys = ['cacheTemplate', 'callback', 'getTemplate', '$regexp',
+		'regexp', 'viewClass', 'keys', 'onDestroy', 'pattern', '$routeView']
 	M.extend(RouteView.prototype, {
 
 		route: function(path, query, options, realPath, cb) {
@@ -157,8 +159,7 @@
 							var _el = el;
 							// 克隆新的一份
 							el = M.Object.create(_el);
-							['cacheTemplate', 'callback', 'getTemplate', '$regexp',
-							 'keys', 'onDestroy', 'pattern', 'regexp', '$routeView'].forEach(function(k) {
+							routeKeys.forEach(function(k) {
 								el[k] = _el[k];
 							});
 							el.$child = null;
@@ -178,9 +179,12 @@
 					if (!that.$root && !that.viewsContainer) {
 						// 初始化 但是默认匹配到的是 子路由 需要初始化 父路由
 						that.$parent.route(el.path, el.query, options, path, function() {
+							that._waiting = true;
 							route(el);
 						});
 						return true;
+					} else {
+						that._waiting = true;
 					}
 					route(el);
 					ret = true;
@@ -210,6 +214,7 @@
 					Router.trigger('routeChangeStart', el, args);
 					that.showLoading();
 					if (el.getTemplate.length) {
+						that._waiting = false;
 						// 有参数 则需要回调 主要场景是异步得到模板
 						// 或者先需要数据 然后利用模板引擎得到结果字符串
 						el.getTemplate(getTemplateCb);
@@ -222,8 +227,7 @@
 				}
 			}
 			function getTemplateCb(template) {
-				that.getTemplateCb(el, template, args);
-				if (realPath && cb) cb();
+				that.getTemplateCb(el, template, args, realPath && cb);
 			}
 		},
 
@@ -303,8 +307,9 @@
 		 * @param  {Object} state    route对象
 		 * @param  {String} template 模板字符串
 		 * @param  {Array}  args     可变变量对应的值
+		 * @param  {Function}  cb    完成后回调
 		 */
-		getTemplateCb: function(state, template, args) {
+		getTemplateCb: function(state, template, args, cb) {
 			this.hideLoading();
 			state._oldTemplate = this.templateCache[state.path];
 			this.templateCache[state.path] = template;
@@ -366,6 +371,8 @@
 				if (state.$routeView) {
 					state.$routeView.setViewsContainer(state.element);
 				}
+				cb && cb();
+				delete that._waiting;
 			}
 		},
 
@@ -376,6 +383,7 @@
 			var reverseClass = 'reverse';
 			var aniClass = 'ani';
 			var allClass = enterClass + ' ' + reverseClass;
+			var overhidden = 'overhidden';
 
 			var pageViewState = this.pageViewState;
 			var that = this;
@@ -399,6 +407,8 @@
 
 				enterClass = aniEnterClass + ' ' + enterClass;
 				leaveClass = aniLeaveClass + ' ' + leaveClass;
+				// 给viewsContainer增加class overhidden 为了不影响做动画效果
+				M.addClass(this.viewsContainer, overhidden);
 			}
 
 			if (options.direction === 'back') {
@@ -473,6 +483,9 @@
 			});
 
 			function checkPageViews() {
+				setTimeout(function() {
+					M.removeClass(that.viewsContainer, overhidden);
+				});
 				// 还有没完成的
 				if (!entered || !leaved) return;
 				that.checkPageViews();
@@ -489,7 +502,10 @@
 			curAnimation = curAnimation == true || curAnimation == 'true' ? true : false;
 			prevAnimation = prevAnimation == true || prevAnimation == 'true' ? true : false;
 
-			animation = curAnimation && prevAnimation && (!this.$root || !options.first);
+			// 决定了第一次load的时候第一个view（需要加载模板的情况下）是否启用动画
+			// 如果不需要加载模板或者直接同步获得template的话 也是不启用的
+			// animation = curAnimation && prevAnimation && (!this._waiting && !this.$root || !options.first);
+			animation = curAnimation && prevAnimation && (!this._waiting || !options.first);
 			return animation;
 		},
 
@@ -540,6 +556,7 @@
 				var _ms = state.$routeView.maskEle;
 				_ms && _ms.parentNode.removeChild(_ms);
 				state.$routeView.maskEle = null;
+				state.$routeView = null;
 			}
 			// 如果存在destroy
 			if (M.isFunction(state.onDestroy)) {
@@ -577,8 +594,6 @@
 
 	var Router = {
 
-		options: defOptions,
-
 		/*出错回调*/
 		errorback: null,
 
@@ -599,8 +614,9 @@
 				this.error(options.error);
 				delete options.error;
 			}
-			M.extend(this.options, options || {});
-			this.$routeView = new RouteView(null, null, this.options);
+			var childOptions = {};
+			M.extend(childOptions, defOptions, options || {});
+			this.$routeView = new RouteView(null, null, childOptions);
 			this._add(routes);
 		},
 
@@ -670,7 +686,7 @@
 			if (children) {
 				// sub view
 				var childOptions = {};
-				var _options = this.options;
+				var _options = routeView.options;
 				M.each(defOptionsKeys, function(k) {
 					if (k in children) {
 						childOptions[k] = children[k];
