@@ -93,11 +93,14 @@
 		return 'animationend';
 	}());
 
-	function RouteView(parentRouteObj, options) {
+	function RouteView(parentRouteObj, parentRouterView, options) {
 		if (parentRouteObj) {
 			parentRouteObj.$routeView = this;
 		} else {
 			this.$root = true;
+		}
+		if (parentRouterView) {
+			this.$parent = parentRouterView;
 		}
 
 		this.routes = [];
@@ -126,14 +129,14 @@
 	}
 	M.extend(RouteView.prototype, {
 
-		route: function(path, query, options) {
+		route: function(path, query, options, realPath, cb) {
 			var states = this.routes;
 			if (!options) options = {};
 			var ret = false;
 			var that = this;
 
 			for (var i = 0, el; el = states[i]; i++) {
-				var args = path.match(el.regexp);
+				var args = path.match(realPath && el.$regexp || el.regexp);
 				if (args) {
 					if (el.element) {
 						// 一条路由规则可能会对应着N个pageview
@@ -154,7 +157,7 @@
 							var _el = el;
 							// 克隆新的一份
 							el = M.Object.create(_el);
-							['cacheTemplate', 'callback', 'getTemplate',
+							['cacheTemplate', 'callback', 'getTemplate', '$regexp',
 							 'keys', 'onDestroy', 'pattern', 'regexp', '$routeView'].forEach(function(k) {
 								el[k] = _el[k];
 							});
@@ -164,7 +167,7 @@
 						}
 					}
 					el.query = query || {};
-					el.path = path;
+					el.path = args[0];
 					el.params = {};
 					el.historyOptions = options;
 					var keys = el.keys;
@@ -172,34 +175,16 @@
 					if (keys.length) {
 						_parseArgs(args, el);
 					}
-
-					// 缓存模板
-					var cacheTemplate = that.getOption(el, options.state, 'cacheTemplate');
-					if (options.first) {
-						var initView = that.viewsContainer.getElementsByClassName(defViewClass)[0];
-						if (initView) {
-							that.templateCache[el.path] = initView.innerHTML;
-							cacheTemplate = true;
-						}
+					if (!that.$root && !that.viewsContainer) {
+						// 初始化 但是默认匹配到的是 子路由 需要初始化 父路由
+						that.$parent.route(el.path, el.query, options, path, function() {
+							route(el);
+						});
+						return true;
 					}
-					if (M.isString(cacheTemplate)) cacheTemplate = cacheTemplate === 'true';
-					// 这里加上 得到模板
-					if (!(cacheTemplate && that.templateCache[el.path]) && el.getTemplate) {
-						Router.trigger('routeChangeStart', el, args);
-						that.showLoading();
-						if (el.getTemplate.length) {
-							// 有参数 则需要回调 主要场景是异步得到模板
-							// 或者先需要数据 然后利用模板引擎得到结果字符串
-							el.getTemplate(getTemplateCb);
-						} else {
-							getTemplateCb(el.getTemplate());
-						}
-					} else {
-						Router.trigger('routeChangeStart', el, args);
-						getTemplateCb(that.templateCache[el.path]);
-					}
+					route(el);
 					ret = true;
-				} else {
+				} else if (!realPath) {
 					if (el.$routeView) {
 						ret = el.$routeView.route(path, query, options);
 					}
@@ -209,9 +194,36 @@
 				}
 			}
 			return ret;
-
+			function route(el) {
+				// 缓存模板
+				var cacheTemplate = that.getOption(el, options.state, 'cacheTemplate');
+				if (options.first) {
+					var initView = that.viewsContainer.getElementsByClassName(defViewClass)[0];
+					if (initView) {
+						that.templateCache[el.path] = initView.innerHTML;
+						cacheTemplate = true;
+					}
+				}
+				if (M.isString(cacheTemplate)) cacheTemplate = cacheTemplate === 'true';
+				// 这里加上 得到模板
+				if (!(cacheTemplate && that.templateCache[el.path]) && el.getTemplate) {
+					Router.trigger('routeChangeStart', el, args);
+					that.showLoading();
+					if (el.getTemplate.length) {
+						// 有参数 则需要回调 主要场景是异步得到模板
+						// 或者先需要数据 然后利用模板引擎得到结果字符串
+						el.getTemplate(getTemplateCb);
+					} else {
+						getTemplateCb(el.getTemplate());
+					}
+				} else {
+					Router.trigger('routeChangeStart', el, args);
+					getTemplateCb(that.templateCache[el.path]);
+				}
+			}
 			function getTemplateCb(template) {
 				that.getTemplateCb(el, template, args);
+				if (realPath && cb) cb();
 			}
 		},
 
@@ -588,7 +600,7 @@
 				delete options.error;
 			}
 			M.extend(this.options, options || {});
-			this.$routeView = new RouteView(null, this.options);
+			this.$routeView = new RouteView(null, null, this.options);
 			this._add(routes);
 		},
 
@@ -666,7 +678,7 @@
 						childOptions[k] = _options[k];
 					}
 				});
-				var subRouteView = new RouteView(opts, childOptions);
+				var subRouteView = new RouteView(opts, routeView, childOptions);
 
 				routes = children.routes;
 				delete children.routes;
@@ -705,7 +717,12 @@
 				last = placeholder.lastIndex;
 			}
 			segment = pattern.substring(last);
-			compiled += quoteRegExp(segment) + (opts.strict ? opts.last : '\/?') + '$';
+			compiled += quoteRegExp(segment);
+			if (opts.children) {
+				// 增加不带end $ 的正则
+				opts.$regexp = new RegExp(compiled, sensitive ? 'i' : undefined);
+			}
+			compiled += (opts.strict ? opts.last : '\/?') + '$';
 			opts.regexp = new RegExp(compiled, sensitive ? 'i' : undefined);
 			return opts;
 		},
