@@ -877,6 +877,8 @@
 	
 	var defViewClass = 'page-view';
 
+	var ENTERCLASS = 'in';
+
 	// 默认配置
 	var defOptions = {
 
@@ -935,6 +937,8 @@
 
 		this.routes = [];
 
+		this.$parentRouteEle = null;
+
 		/*蒙层元素*/
 		this.maskEle = null;
 		/*当前pageview状态对象*/
@@ -954,11 +958,12 @@
 			this.options.cacheViewsNum = 1;
 		}
 		if (!parentRouteObj) {
-			this.setViewsContainer();
+			this.setViewsContainer(M.document);
 		}
 	}
 	var routeKeys = ['cacheTemplate', 'callback', 'getTemplate', '$regexp',
-		'regexp', 'viewClass', 'keys', 'onDestroy', 'pattern', '$routeView']
+		'regexp', 'viewClass', 'keys', 'onDestroy', 'pattern', '$routeView',
+		'$parentArgsLen', 'onEnter', 'onLeave']
 	M.extend(RouteView.prototype, {
 
 		route: function(path, query, options, realPath, cb) {
@@ -966,15 +971,15 @@
 			if (!options) options = {};
 			var ret = false;
 			var that = this;
-
 			for (var i = 0, el; el = states[i]; i++) {
 				var args = path.match(realPath && el.$regexp || el.regexp);
 				if (args) {
+					var _path = args[0];
 					if (el.element) {
 						// 一条路由规则可能会对应着N个pageview
 						var finded = false;
 						while (el) {
-							if (el.path === path) {
+							if (el.path === _path) {
 								finded = true;
 								break;
 							}
@@ -998,7 +1003,7 @@
 						}
 					}
 					el.query = query || {};
-					el.path = args[0];
+					el.path = _path;
 					el.params = {};
 					el.historyOptions = options;
 					var keys = el.keys;
@@ -1006,16 +1011,17 @@
 					if (keys.length) {
 						_parseArgs(args, el);
 					}
-					if (!that.$root && !that.viewsContainer) {
+					if (!that.$root && (!that.viewsContainer || !M.hasClass(that.$parentRouteEle, ENTERCLASS))) {
 						// 初始化 但是默认匹配到的是 子路由 需要初始化 父路由
 						that.$parent.route(el.path, el.query, options, path, function() {
 							that._waiting = true;
 							route(el);
 						});
 						return true;
-					} else {
-						that._waiting = true;
 					}
+					// else {
+					// 	that._waiting = true;
+					// }
 					route(el);
 					ret = true;
 				} else if (!realPath) {
@@ -1031,17 +1037,21 @@
 			function route(el) {
 				// 缓存模板
 				var cacheTemplate = that.getOption(el, options.state, 'cacheTemplate');
+				var id = M.getUIDByKey(el.path);
 				if (options.first) {
 					var initView = that.viewsContainer.getElementsByClassName(defViewClass)[0];
 					if (initView) {
-						that.templateCache[el.path] = initView.innerHTML;
-						cacheTemplate = true;
+						if (!initView.id || initView.id == id) {
+							that.templateCache[el.path] = initView.innerHTML;
+							cacheTemplate = true;
+						}
 					}
 				}
+				matchArgs(el); // 得到正确的参数
 				if (M.isString(cacheTemplate)) cacheTemplate = cacheTemplate === 'true';
 				// 这里加上 得到模板
 				if (!(cacheTemplate && that.templateCache[el.path]) && el.getTemplate) {
-					Router.trigger('routeChangeStart', el, args);
+					Router.trigger('routeChangeStart', el, el.args);
 					that.showLoading();
 					if (el.getTemplate.length) {
 						that._waiting = false;
@@ -1052,24 +1062,28 @@
 						getTemplateCb(el.getTemplate());
 					}
 				} else {
-					Router.trigger('routeChangeStart', el, args);
+					Router.trigger('routeChangeStart', el, el.args);
 					getTemplateCb(that.templateCache[el.path]);
 				}
 			}
 			function getTemplateCb(template) {
-				that.getTemplateCb(el, template, args, realPath && cb);
+				that.getTemplateCb(el, template, realPath && cb);
 			}
 		},
 
 		setViewsContainer: function(ele) {
-			// 根据viewsSelector得到views容器元素
-			var viewsSelector = this.options.viewsSelector;
-			var backContainer = ele || M.document;
-			var viewsContainer = viewsSelector && backContainer.querySelector(viewsSelector);
-			if (!viewsContainer) {
-				viewsContainer = ele || backContainer.body;
+			this.$parentRouteEle = ele;
+			var viewsContainer;
+			var viewsSelector;
+			if (ele) {
+				// 根据viewsSelector得到views容器元素
+				viewsSelector = this.options.viewsSelector;
+				viewsContainer = viewsSelector && ele.querySelector(viewsSelector);
+				if (!viewsContainer) {
+					viewsContainer = ele.body || ele;
+				}
 			}
-			this.viewsContainer = viewsContainer;
+			this.viewsContainer = viewsContainer || null;
 		},
 
 		/**
@@ -1136,10 +1150,9 @@
 		 * 得到模板后callback
 		 * @param  {Object} state    route对象
 		 * @param  {String} template 模板字符串
-		 * @param  {Array}  args     可变变量对应的值
 		 * @param  {Function}  cb    完成后回调
 		 */
-		getTemplateCb: function(state, template, args, cb) {
+		getTemplateCb: function(state, template, cb) {
 			this.hideLoading();
 			state._oldTemplate = this.templateCache[state.path];
 			this.templateCache[state.path] = template;
@@ -1152,9 +1165,22 @@
 			if (first) {
 				options.first = first;
 				nowView = this.viewsContainer.getElementsByClassName(defViewClass)[0];
+				if (this.maskEle) {
+					if (this.maskEle.parentNode) {
+						this.maskEle.parentNode.removeChild(this.maskEle);
+					} else {
+						this.maskEle = null;
+					}
+				}
+				this.defaultTemplate = this.viewsContainer.innerHTML;
+				if (!nowView) {
+					M.innerHTML(this.viewsContainer, '');
+					this.maskEle = null;
+				}
+				if (this.maskEle) {
+					this.viewsContainer.appendChild(this.maskEle);
+				}
 			}
-			
-			var enterClass = 'in';
 
 			var _pageViewEle = M.document.getElementById(id);
 			if (!_pageViewEle) {
@@ -1168,16 +1194,21 @@
 				state.cached = true;
 			}
 
+			var shown = false;
+			if (state.$routeView) {
+				shown = M.hasClass(_pageViewEle, ENTERCLASS);
+			}
 			// 模板不一样 更新
 			if ((!state.cached && !nowView) || template !== state._oldTemplate) {
-				M.innerHTML(_pageViewEle, template);
+				if (!shown) {
+					M.innerHTML(_pageViewEle, template);
+				}
 				state.cached = false;
 			}
-
+			
 			if (state.$routeView) {
-				var shown = M.hasClass(_pageViewEle, enterClass);
 				if (shown) {
-					state.$routeView._transView(null, state.$routeView.pageViewState, options, _endCall);
+					state.$routeView._transView(null, state.$routeView.pageViewState, options, childDone);
 					return;
 				} else if (state.$routeView.pageViewState) {
 					state.$routeView._transView(null, state.$routeView.pageViewState, options);
@@ -1193,27 +1224,35 @@
 				}
 				that.pagesCache.push(state);
 				that.pageViewState = state;
+				setHtml();
 				_endCall();
 			}
-			function _endCall() {
-				var callbackArgs = args.concat();
-				var p = that.$parent;
-				while (p) {
-					callbackArgs.shift();
-					p = p.$parent;
+			function childDone() {
+				setHtml();
+				state.onEnter && state.onEnter.apply(state, state.args);
+				_endCall();
+			}
+			function setHtml() {
+				if (shown) {
+					if (state.$routeView.defaultTemplate || !state.cached) {
+						M.innerHTML(_pageViewEle, template);
+						state.cached = false;
+					}
 				}
-				state.callback.apply(state, callbackArgs);
-				Router.trigger('routeChangeEnd', state, args);
+			}
+			function _endCall() {
 				if (state.$routeView) {
 					state.$routeView.setViewsContainer(state.element);
 				}
+				state.callback.apply(state, state.args);
+				Router.trigger('routeChangeEnd', state, state.args);
 				cb && cb();
 				delete that._waiting;
 			}
 		},
 
 		_transView: function(_pageViewEle, state, options, endCall) {
-			var enterClass = 'in';
+			var enterClass = ENTERCLASS;
 			var leaveClass = 'out';
 			var initPosClass = leaveClass;
 			var reverseClass = 'reverse';
@@ -1257,6 +1296,7 @@
 				M.addClass(pageViewState.element, leaveClass);
 				// reflow
 				pageViewState.element.offsetWidth = pageViewState.element.offsetWidth;
+				pageViewState.onLeave && pageViewState.onLeave.apply(pageViewState, pageViewState.args);
 			}
 			
 			if (_pageViewEle) {
@@ -1265,6 +1305,7 @@
 				M.addClass(_pageViewEle, enterClass);
 				// reflow
 				_pageViewEle.offsetWidth = _pageViewEle.offsetWidth;
+				state.onEnter && state.onEnter.apply(state, state.args);
 			}
 			
 			if (!state.cached) {
@@ -1286,6 +1327,10 @@
 				entered = true;
 				leaved = true;
 				endCall && endCall(_pageViewEle);
+				if (!_pageViewEle) {
+					that.pageViewState = null;
+					if (that.defaultTemplate) M.innerHTML(that.viewsContainer, that.defaultTemplate);
+				}
 				checkPageViews();
 				return;
 			}
@@ -1309,6 +1354,7 @@
 				if (!_pageViewEle) {
 					endCall && endCall();
 					that.pageViewState = null;
+					if (that.defaultTemplate) M.innerHTML(that.viewsContainer, that.defaultTemplate);
 				}
 				// pageViewState.element.style.display = 'none';
 				checkPageViews();
@@ -1341,6 +1387,9 @@
 			// 如果不需要加载模板或者直接同步获得template的话 也是不启用的
 			// animation = curAnimation && prevAnimation && (!this._waiting && !this.$root || !options.first);
 			animation = curAnimation && prevAnimation && (!this._waiting || !options.first);
+			if (options.first) {
+				animation = animation && !this.$root;
+			}
 			return animation;
 		},
 
@@ -1386,7 +1435,7 @@
 					_state = state.$routeView.pagesCache.pop();
 				}
 				// state.$routeView.templateCache = {};
-				state.$routeView.viewsContainer = null;
+				state.$routeView.setViewsContainer();
 				state.$routeView.pageViewState = null;
 				var _ms = state.$routeView.maskEle;
 				_ms && _ms.parentNode.removeChild(_ms);
@@ -1477,11 +1526,20 @@
 			this.errorback = cb;
 		},
 
-		_add: function(routes, routeView, basePath) {
+		_add: function(routes, routeView, basePath, parentRoute) {
 			var path;
 			if (!basePath) basePath = '';
 			M.each(routes, function(route) {
-				path = basePath + route.path;
+				path = route.path;
+				var len = 0;
+				if (basePath) {
+					path = basePath + path;
+					if (parentRoute.$parentArgsLen) {
+						len += parentRoute.$parentArgsLen;
+					}
+					len += parentRoute.keys.length;
+					route.$parentArgsLen = len;
+				}
 				// 避免和之后的path冲突 这里换成pattern
 				route.pattern = path;
 				delete route.path;
@@ -1533,7 +1591,7 @@
 
 				routes = children.routes;
 				delete children.routes;
-				this._add(routes, subRouteView, path);
+				this._add(routes, subRouteView, path, opts);
 				delete opts.children; // 移除掉
 			}
 		},
@@ -1684,6 +1742,18 @@
 				}
 			}
 			match[j] = stateObj.params[key.name] = val;
+		}
+		
+		stateObj.args = match;
+	}
+	function matchArgs(stateObj) {
+		var match = stateObj.args;
+		if (!match) return;
+		if (stateObj.keys.length) {
+			var pl = stateObj.$parentArgsLen;
+			match.splice(0, pl);
+		} else {
+			match.length = 0;
 		}
 	}
 
