@@ -601,14 +601,17 @@
 		destroyState: function(state) {
 			if (state.$routeView) {
 				// destroy child
-				var _state = state.$routeView.pagesCache.pop();
+				var _state = state.$routeView.pagesCache.shift();
 				while (_state) {
 					state.$routeView.destroyState(_state);
-					_state = state.$routeView.pagesCache.pop();
+					_state = state.$routeView.pagesCache.shift();
 				}
 				// state.$routeView.templateCache = {};
-				state.$routeView.setViewsContainer();
 				state.$routeView.pageViewState = null;
+				if (state.$routeView.$parentRouteEle != this.pageViewState.element) {
+					state.$routeView.setViewsContainer();
+				}
+				
 				var _ms = state.$routeView.maskEle;
 				_ms && _ms.parentNode.removeChild(_ms);
 				state.$routeView.maskEle = null;
@@ -621,7 +624,6 @@
 			try {
 				state.element && state.element.parentNode.removeChild(state.element);
 			} catch(e) {
-				debugger;
 			}
 			state.element = null;
 			var p = M.Object.getPrototypeOf(state);
