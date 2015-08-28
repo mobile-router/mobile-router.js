@@ -13,11 +13,13 @@ mobile-router.js — A lightweight single page bone for mobile web App.轻量级
 
 [mobile-router.js-demo](https://github.com/dolymood/mobile-router.js-demo)是一个关于mobile-router.js如何使用的DEMO，暂时包含：前后端模板共享，后端输出首屏，与其他库自由搭配，动画转场。
 
+[mobile-router.js-sample](https://github.com/dolymood/mobile-router.js-sample) - A mobile-router.js demo like [ui-router sample](http://angular-ui.github.io/ui-router/sample/)
+
 ### 优势：
 
 * 使用简单、方便、轻量，基于 [history](https://developer.mozilla.org/en-US/docs/Web/Guide/API/DOM/Manipulating_the_browser_history)、[window.onpopstate](https://developer.mozilla.org/en-US/docs/WindowEventHandlers.onpopstate)。
 
-* 支持路由视图嵌套。
+* 支持路由视图嵌套 (1.5.0+)。
 
 * 无依赖，可与其他框架（库）搭配自由使用，例如：`jquery`, `zepto`, `iscroll`等。
 
@@ -57,12 +59,18 @@ M.router.init([
 		getTemplate: function() {
 			return '/index';
 		},
-		callback: function() {
+		callback: function() { // 页面展示出来之后
 			if (this.cached) return;
 			// 处理操作...
 		},
 		onDestroy: function() {
 			// 例如，处理一些解绑操作，销毁和DOM关联
+		},
+		onEnter: function(paramName) { // 1.5.3+ // 页面将要显示的时候
+
+		},
+		onLeave: function() { // 1.5.3+ // // 页面将要隐藏的时候
+
 		}
 	},
 	{
@@ -85,7 +93,7 @@ M.router.init([
 			// 例如，处理一些解绑操作，销毁和DOM关联
 		}
 	},
-	{ // 嵌套！！
+	{ // 嵌套！！(1.5.0+)
 		path: '/b/:bid',
 		getTemplate: function(cb) {
 			var path = this.path.substr(1);

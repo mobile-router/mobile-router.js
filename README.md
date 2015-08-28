@@ -13,6 +13,8 @@ mobile-router.js — A lightweight single page bone for mobile web App
 
 The [mobile-router.js-demo](https://github.com/dolymood/mobile-router.js-demo) is a simple mobile web app demo for [mobile-router.js](https://github.com/dolymood/mobile-router.js).
 
+[mobile-router.js-sample](https://github.com/dolymood/mobile-router.js-sample) - A mobile-router.js demo like [ui-router sample](http://angular-ui.github.io/ui-router/sample/)
+
 [中文 README](https://github.com/dolymood/mobile-router.js/blob/master/README-zh_CN.md)
 
 ## How can i install it?
@@ -39,12 +41,18 @@ M.router.init([
 		getTemplate: function() { // sync
 			return '/index template content';
 		},
-		callback: function() {
+		callback: function() { // called after the page has been shown
 			if (this.cached) return; // the page was cached in document.
 			// do something ...
 		},
 		onDestroy: function() {
 			// destroy
+		},
+		onEnter: function(paramName) { // 1.5.3+ // called when the page will show
+
+		},
+		onLeave: function() { // 1.5.3+ // called when the page will hide
+
 		}
 	},
 	{
@@ -65,7 +73,7 @@ M.router.init([
 			// destroy
 		}
 	},
-	{ // Nested routes & views!
+	{ // Nested routes & views! (1.5.0+)
 		path: '/b/:bid',
 		getTemplate: function(cb) {
 			var path = this.path.substr(1);
@@ -91,7 +99,7 @@ M.router.init([
 			console.log('destroy:/b', this, arguments);
 		},
 
-		children: { // config for nested routes & views!
+		children: { // config for nested routes & views! (1.5.0+)
 			/* these configs, default inherit form parent config */
 			viewsSelector: '',
 			viewClass: 'sub-view-b',
@@ -185,7 +193,7 @@ M.history.start({
 
 * Lightweight, Easy. Based on [history](https://developer.mozilla.org/en-US/docs/Web/Guide/API/DOM/Manipulating_the_browser_history), [window.onpopstate](https://developer.mozilla.org/en-US/docs/WindowEventHandlers.onpopstate).
 
-* Nested routes & views.
+* Nested routes & views (1.5.0+).
 
 * No Dependencies. You can use it with `jquery`, `zepto`, `iscroll` or others.
 
