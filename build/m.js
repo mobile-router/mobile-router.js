@@ -958,7 +958,7 @@
 			this.options.cacheViewsNum = 1;
 		}
 		if (!parentRouteObj) {
-			this.setViewsContainer(M.document);
+			this.setViewsContainer(M.document.body);
 		}
 	}
 	var routeKeys = ['cacheTemplate', 'callback', 'getTemplate', '$regexp',
@@ -1080,7 +1080,7 @@
 				viewsSelector = this.options.viewsSelector;
 				viewsContainer = viewsSelector && ele.querySelector(viewsSelector);
 				if (!viewsContainer) {
-					viewsContainer = ele.body || ele;
+					viewsContainer = ele;
 				}
 			}
 			this.viewsContainer = viewsContainer || null;
@@ -1172,10 +1172,12 @@
 						this.maskEle = null;
 					}
 				}
-				this.defaultTemplate = this.viewsContainer.innerHTML;
-				if (!nowView) {
-					M.innerHTML(this.viewsContainer, '');
-					this.maskEle = null;
+				if (this.viewsContainer && this.viewsContainer !== this.$parentRouteEle) {
+					this.defaultTemplate = this.viewsContainer.innerHTML;
+					if (!nowView) {
+						M.innerHTML(this.viewsContainer, '');
+						this.maskEle = null;
+					}
 				}
 				if (this.maskEle) {
 					this.viewsContainer.appendChild(this.maskEle);
