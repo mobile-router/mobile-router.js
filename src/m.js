@@ -473,6 +473,18 @@
 					}
 				}
 				return ret;
+			},
+			equal: function(obj1, obj2) {
+				var ret = true;
+				M.each(obj1, function(v, k) {
+					if (Object(v) === v) {
+						ret = M.Object.equal(v, obj2[k]);
+					} else {
+						ret = obj2[k] === v;
+					}
+					return ret;
+				});
+				return ret;
 			}
 		}
 	});
