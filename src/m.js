@@ -48,11 +48,15 @@
 	// 解析location或者a信息
 	var parseLocation = function(loc) {
 		if (!loc) loc = location;
+		var url = loc.href;
+		var hash = getHash(loc);
+		var rurl = trimUrl(url);
+		if (!hash) url = rurl;
 		return {
-			url: loc.href, // 完整 href
-			rurl: trimUrl(loc.href), // 去除hash的 href
+			url: url, // 完整 href
+			rurl: rurl, // 去除hash的 href
 			host: loc.host, // host
-			hash: getHash(loc), // hash 不带#
+			hash: hash, // hash 不带#
 			protocol: loc.protocol, // 协议
 			origin: loc.origin || (loc.protocol + '//' + loc.host), // origin
 			pathname: loc.pathname, // path
@@ -177,6 +181,32 @@
 			}
 		}
 		return target;
+	};
+	M.nextTick = new function() {
+		var tickImmediate = win.setImmediate;
+		var tickObserver = win.MutationObserver;
+		if (tickImmediate) { //IE10 \11 edage
+			return tickImmediate.bind(win);
+		}
+		var queue = []
+		function callback() {
+			var n = queue.length;
+			for (var i = 0; i < n; i++) {
+				queue[i]();
+			}
+			queue = queue.slice(n);
+		}
+		if (tickObserver) { // 支持MutationObserver
+			var node = document.createTextNode('M');
+			new tickObserver(callback).observe(node, {characterData: true});
+			return function(fn) {
+				queue.push(fn);
+				node.data = Math.random();
+			};
+		}
+		return function(fn) {
+			setTimeout(fn);
+		};
 	};
 
 	// 简单事件
@@ -304,80 +334,9 @@
 			$(ele).html(html);
 		};
 	} else {
-		M.innerHTML = function() {
-			var tagHooks = new function() {
-				M.extend(this, {
-					option: document.createElement('select'),
-					thead: document.createElement('table'),
-					td: document.createElement('tr'),
-					area: document.createElement('map'),
-					tr: document.createElement('tbody'),
-					col: document.createElement('colgroup'),
-					legend: document.createElement('fieldset'),
-					_default: document.createElement('div'),
-					'g': document.createElementNS('http://www.w3.org/2000/svg', 'svg')
-				});
-				this.optgroup = this.option;
-				this.tbody = this.tfoot = this.colgroup = this.caption = this.thead;
-				this.th = this.td;
-			};
-			'circle,defs,ellipse,image,line,path,polygon,polyline,rect,symbol,text,use'.replace(rword, function(tag) {
-				tagHooks[tag] = tagHooks.g; //处理SVG
-			});
-
-			var rtagName = /<([\w:]+)/;
-			var rxhtml = /<(?!area|br|col|embed|hr|img|input|link|meta|param)(([\w:]+)[^>]*)\/>/ig;
-			var scriptTypes = {
-				'': 1,
-				'text/javascript': 1,
-				'text/ecmascript': 1,
-				'application/ecmascript': 1,
-				'application/javascript': 1
-			};
-			var script = document.createElement('script');
-			var hyperspace = document.createDocumentFragment();
-
-			function parseHTML(html) {
-				if (typeof html !== 'string') html = html + '';
-				html = html.replace(rxhtml, '<$1></$2>').trim();
-				var tag = (rtagName.exec(html) || ['', ''])[1].toLowerCase(),
-						wrapper = tagHooks[tag] || tagHooks._default,
-						fragment = hyperspace.cloneNode(false),
-						firstChild;
-
-				wrapper.innerHTML = html;
-				var els = wrapper.getElementsByTagName('script');
-				var forEach = [].forEach;
-				if (els.length) {
-					//使用innerHTML生成的script节点不会发出请求与执行text属性
-					for (var i = 0, el, neo; el = els[i++]; ) {
-						if (scriptTypes[el.type]) {
-							neo = script.cloneNode(false);
-							each(el.attributes, function(attr) {
-								neo.setAttribute(attr.name, attr.value);
-							});
-							neo.text = el.text;
-							el.parentNode.replaceChild(neo, el);
-						}
-					}
-				}
-
-				while (firstChild = wrapper.firstChild) {
-					// 将wrapper上的节点转移到文档碎片上！
-					fragment.appendChild(firstChild);
-				}
-				return fragment;
-			}
-
-			return function(ele, html) {
-				var f = parseHTML(html);
-				// 先清空 ele 内容
-				ele.innerHTML = '';
-				ele.appendChild(f);
-				f = null;
-			};
-
-		}();
+		M.innerHTML = function(ele, html) {
+			ele.innerHTML = html;
+		};
 	}
 
 	// 暴露到M上
@@ -453,18 +412,6 @@
 		},
 
 		Object: {
-			create: Object.create || function(proto) {
-				return {
-					__proto__: proto
-				};
-			},
-			setPrototypeOf: Object.setPrototypeOf || function(object, proto) {
-				object.__proto__ = proto;
-				return object;
-			},
-			getPrototypeOf: Object.getPrototypeOf || function(object) {
-				return object.__proto__;
-			},
 			keys: Object.keys || function(object) {
 				var ret = [];
 				for (var k in object) {
@@ -490,5 +437,4 @@
 	});
 
 	return M;
-
 });
