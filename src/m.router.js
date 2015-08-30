@@ -97,12 +97,6 @@
 								that._waiting = true;
 								that._route(routeIns, cb);
 							});
-							/*p.$parent.route(routeIns.path, routeIns.query, options, path, function() {
-								delete p.$parent.pageViewState.options.matchIns;
-								if (that.pageViewState && that.pageViewState.path === path) return;
-								that._waiting = true;
-								that._route(routeIns, cb);
-							});*/
 							return true;
 						}
 						p = p.$parent;
