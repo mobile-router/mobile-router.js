@@ -91,13 +91,18 @@
 						element = pr.ele();
 						if (!that.viewsContainer || !element || !pr.actived()) {
 							// 初始化 但是默认匹配到的是 子路由 需要初始化 父路由
-							options.matchIns = routeIns;
-							p.$parent.route(routeIns.path, routeIns.query, options, path, function() {
-								delete p.$parent.pageViewState.options.matchIns;
+							that.$parent.route(routeIns.path, routeIns.query, M.extend({matchIns: routeIns}, options), path, function() {
+								delete that.$parent.pageViewState.options.matchIns;
 								if (that.pageViewState && that.pageViewState.path === path) return;
 								that._waiting = true;
 								that._route(routeIns, cb);
 							});
+							/*p.$parent.route(routeIns.path, routeIns.query, options, path, function() {
+								delete p.$parent.pageViewState.options.matchIns;
+								if (that.pageViewState && that.pageViewState.path === path) return;
+								that._waiting = true;
+								that._route(routeIns, cb);
+							});*/
 							return true;
 						}
 						p = p.$parent;
@@ -301,24 +306,32 @@
 			var routeView = route.routeView;
 			if (routeView) {
 				if (shown) {
-					routeView._transView(null, routeView.pageViewState, options, childDone);
+					if (routeView.pageViewState) {
+						routeView._transView(null, routeView.pageViewState, options, childDone);
+					} else {
+						childDone();
+					}
 					return;
 				} else if (routeView.pageViewState) {
 					var matchIns = routeIns.options.matchIns;
-					var matchRoute = matchIns.route;
-					var rv = routeView, childRV, finded = false;
-					while (!finded && rv && rv.pageViewState) {
-						childRV = rv.pageViewState.route.routeView;
-						if (matchRoute == rv.pageViewState.route) {
-							finded = true;
-							if (matchIns.path !== rv.pageViewState.path) {
-								rv._transView(null, rv.pageViewState, options);
+					var finded = false, matchRoute;
+					if (matchIns) {
+						matchRoute = matchIns.route;
+						var rv = routeView, childRV;
+						while (!finded && rv && rv.pageViewState) {
+							childRV = rv.pageViewState.route.routeView;
+							if (matchRoute == rv.pageViewState.route) {
+								finded = true;
+								if (matchIns.path !== rv.pageViewState.path) {
+									rv._transView(null, rv.pageViewState, options);
+								}
+								childRV && childRV.pageViewState && childRV._transView(null, childRV.pageViewState, options);
+							} else {
+								rv = childRV;
 							}
-							childRV && childRV.pageViewState && childRV._transView(null, childRV.pageViewState, options);
-						} else {
-							rv = childRV;
 						}
 					}
+					
 					if (!finded) {
 						routeView._transView(null, routeView.pageViewState, options);
 					}
