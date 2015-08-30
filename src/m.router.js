@@ -971,11 +971,7 @@
 			last = placeholder.lastIndex;
 		}
 		segment = pattern.substring(last);
-		if (segment === '?') {
-			compiled += '?';
-		} else {
-			compiled += quoteRegExp(segment);
-		}
+		compiled += quoteRegExp(segment);
 		if (opts.children) {
 			// 增加不带end $ 的正则
 			opts.$regexp = new RegExp(compiled, sensitive ? 'i' : undefined);
