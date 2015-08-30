@@ -160,7 +160,7 @@
 					this._waiting = false;
 					// 有参数 则需要回调 主要场景是异步得到模板
 					args = args.concat();
-					args.unshift(getTemplateCb);
+					args.push(getTemplateCb);
 					route.getTemplate.apply(routeIns, args);
 				} else {
 					getTemplateCb(doCallback(routeIns, 'getTemplate'));
