@@ -156,14 +156,12 @@
 				doCallback(routeIns, 'onActive');
 				Router.trigger('routeChangeStart', routeIns, args);
 				this.showLoading();
-				if (route.getTemplate.length > args.length) {
+				if (route.getTemplate.length > 0) {
 					this._waiting = false;
 					// 有参数 则需要回调 主要场景是异步得到模板
-					args = args.concat();
-					args.push(getTemplateCb);
-					route.getTemplate.apply(routeIns, args);
+					route.getTemplate.call(routeIns, getTemplateCb);
 				} else {
-					getTemplateCb(doCallback(routeIns, 'getTemplate'));
+					getTemplateCb(route.getTemplate.call(routeIns));
 				}
 			} else {
 				if (!route.getTemplate && !cb && this._redirectTo(routeIns, true)) {
