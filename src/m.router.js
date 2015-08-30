@@ -11,42 +11,22 @@
 })(this, function(win, M, history) {
 
 	// clone fx https://github.com/RubyLouvre/mmRouter/blob/master/mmRouter.js
-
 	// url模式参数匹配
 	var placeholder = /([:*])(\w+)|\{(\w+)(?:\:((?:[^{}\\]+|\\.|\{(?:[^{}\\]+|\\.)*\})+))?\}/g;
-
 	// 是否已初始化
 	var inited = false;
-	
 	var defViewClass = 'page-view';
-
 	var ENTERCLASS = 'in';
-
 	// 默认配置
 	var defOptions = {
-
-		/*是否缓存模板*/
-		cacheTemplate: true,
-
-		/*views容器选择器*/
-		viewsSelector: '',
-
-		/*view的class 默认都会有 page-view 的 class */
-		viewClass: '',
-
-		/*是否有动画*/
-		animation: true,
-		/*类型*/
-		aniClass: 'slide',
-
-		/*蒙层class*/
-		maskClass: 'mask',
-		/*显示loading*/
-		showLoading: true,
-
-		/*缓存view数*/
-		cacheViewsNum: 3
-
+		cacheTemplate: true, /*是否缓存模板*/
+		viewsSelector: '', /*views容器选择器*/
+		viewClass: '', /*view的class 默认都会有 page-view 的 class */
+		animation: true, /*是否有动画*/
+		aniClass: 'slide', /*类型*/
+		maskClass: 'mask', /*蒙层class*/
+		showLoading: true, /*显示loading*/
+		cacheViewsNum: 3 /*缓存view数*/
 	};
 	var defOptionsKeys = M.Object.keys(defOptions);
 
@@ -71,14 +51,13 @@
 	function RouteView(parentRoute, parentRouterView, options) {
 		if (parentRoute) {
 			parentRoute.setRouteView(this);
-			this.isRoot = false;
+			this.$parentRoute = parentRoute;
 		} else {
-			this.isRoot = true;
+			this.$parentRoute = null;
 		}
 		if (parentRouterView) this.$parent = parentRouterView;
 
 		this.routes = [];
-		this.parentRouteEle = null;
 		this.maskEle = null;
 		/*当前pageview状态对象*/
 		this.pageViewState = null;
@@ -106,17 +85,18 @@
 			for (var i = 0, el, _path, routeIns, keys; el = routes[i]; i++) {
 				var args = path.match(realPath && el.$regexp || el.regexp);
 				if (args) {
-					_path = args[0];
-					args.shift();
+					_path = args.shift();
 					routeIns = el.ins(_path, query || {}, args, options);
-
-					if (!that.isRoot && (!that.viewsContainer || !M.hasClass(that.parentRouteEle, ENTERCLASS))) {
-						// 初始化 但是默认匹配到的是 子路由 需要初始化 父路由
-						that.$parent.route(routeIns.path, routeIns.query, options, path, function() {
-							that._waiting = true;
-							that._route(routeIns, cb);
-						});
-						return true;
+					if (that.$parentRoute) {
+						var element = that.$parentRoute.ele();
+						if (!that.viewsContainer || !element || !M.hasClass(element, ENTERCLASS)) {
+							// 初始化 但是默认匹配到的是 子路由 需要初始化 父路由
+							that.$parent.route(routeIns.path, routeIns.query, options, path, function() {
+								that._waiting = true;
+								that._route(routeIns, cb);
+							});
+							return true;
+						}
 					}
 					that._route(routeIns, cb);
 					ret = true;
@@ -130,6 +110,26 @@
 				}
 			}
 			return ret;
+		},
+
+		_redirectTo: function(routeIns, async) {
+			var route = routeIns.route;
+			var rtUrl;
+			if (route.redirectTo && (rtUrl = doCallback(routeIns, 'redirectTo'))) {
+				if (!routeIns.equalTo(rtUrl, true)) {
+					if (async) M.nextTick(reT);
+					else reT();
+					return true;
+				}
+			}
+			return false;
+			function reT() {
+				!routeIns.element && route.destroyIns(routeIns);
+				var data = {};
+				if (!async) data.redirectToSync = true;
+				if (!route.redirectPushState) data.href = rtUrl;
+				M.router.navigate(rtUrl, data);
+			}
 		},
 
 		_route: function(routeIns, cb) {
@@ -146,24 +146,28 @@
 				this.templateCache[routeIns.path] = initView.innerHTML;
 				cacheTemplate = true;
 			}
-			matchArgs(routeIns); // 得到正确的参数
 			if (M.isString(cacheTemplate)) cacheTemplate = cacheTemplate === 'true';
 			// 这里加上 得到模板
+			var args = routeIns.args;
 			if (!(cacheTemplate && this.templateCache[routeIns.path]) && route.getTemplate) {
-				Router.trigger('routeChangeStart', routeIns, routeIns.args);
+				doCallback(routeIns, 'onActive');
+				Router.trigger('routeChangeStart', routeIns, args);
 				this.showLoading();
-				if (route.getTemplate.length) {
+				if (route.getTemplate.length > args.length) {
 					this._waiting = false;
 					// 有参数 则需要回调 主要场景是异步得到模板
-					var args = routeIns.args.concat();
-					args.splice(0, 0, getTemplateCb);
+					args = args.concat();
+					args.unshift(getTemplateCb);
 					route.getTemplate.apply(routeIns, args);
-					doCallback(routeIns, 'getTemplate');
 				} else {
 					getTemplateCb(doCallback(routeIns, 'getTemplate'));
 				}
 			} else {
-				Router.trigger('routeChangeStart', routeIns, routeIns.args);
+				if (!route.getTemplate && !cb && this._redirectTo(routeIns, true)) {
+					return;
+				}
+				doCallback(routeIns, 'onActive');
+				Router.trigger('routeChangeStart', routeIns, args);
 				getTemplateCb(this.templateCache[routeIns.path]);
 			}
 			function getTemplateCb(template) {
@@ -172,7 +176,6 @@
 		},
 
 		setViewsContainer: function(ele) {
-			this.parentRouteEle = ele;
 			var viewsContainer;
 			var viewsSelector;
 			if (ele) {
@@ -254,7 +257,7 @@
 				options.first = first;
 				nowView = this.viewsContainer.getElementsByClassName(defViewClass)[0];
 				removeEle(this.maskEle);
-				if (this.viewsContainer && this.viewsContainer !== this.parentRouteEle) {
+				if (this.viewsContainer && this.$parentRoute && this.viewsContainer !== this.$parentRoute.ele()) {
 					this.defaultTemplate = this.viewsContainer.innerHTML;
 					if (!nowView) {
 						M.innerHTML(this.viewsContainer, '');
@@ -276,10 +279,13 @@
 				routeIns.cached = true;
 			}
 
-			var shown = false;
+			var shown = M.hasClass(_pageViewEle, ENTERCLASS);
 			var route = routeIns.route;
-			if (route.routeView) {
-				shown = M.hasClass(_pageViewEle, ENTERCLASS);
+			var redirected = false;
+			if (shown && routeIns.element === _pageViewEle && that._redirectTo(routeIns, true)) {
+				redirected = true;
+				childDone();
+				return;
 			}
 			// 模板不一样 更新
 			if ((!routeIns.cached && !nowView) || template !== routeIns._oldTemplate) {
@@ -288,7 +294,6 @@
 				}
 				routeIns.cached = false;
 			}
-			
 			if (route.routeView) {
 				if (shown) {
 					route.routeView._transView(null, route.routeView.pageViewState, options, childDone);
@@ -312,11 +317,11 @@
 			}
 			function childDone() {
 				setHtml();
-				route.onEnter && route.onEnter.apply(routeIns, routeIns.args);
+				doCallback(routeIns, 'onEnter');
 				_endCall();
 			}
 			function setHtml() {
-				if (shown) {
+				if (shown && route.routeView) {
 					if (route.routeView.defaultTemplate || !routeIns.cached) {
 						M.innerHTML(_pageViewEle, template);
 						routeIns.cached = false;
@@ -331,6 +336,7 @@
 				Router.trigger('routeChangeEnd', routeIns, routeIns.args);
 				cb && cb();
 				delete that._waiting;
+				!redirected && !cb && that._redirectTo(routeIns);
 			}
 		},
 
@@ -354,7 +360,7 @@
 			}
 			
 			var animation = this._shouldAni(this.options.animation, routeIns, options);
-			animation = animation && !!endCall;
+			animation = animation && !!endCall && !routeIns.redirectTo && !routeIns.options.state.data.redirectToSync;
 			
 			if (animation) {
 				var aniEnterClass = aniClass;
@@ -411,24 +417,32 @@
 			}
 			_pageViewEle && _pageViewEle.addEventListener(aniEndName, function aniEnd() {
 				entered = true;
-				// 取消监听事件
-				_pageViewEle.removeEventListener(aniEndName, aniEnd);
+				cancelEvt(_pageViewEle, aniEnd);
 				M.removeClass(_pageViewEle, aniEnterClass);
 				endCall && endCall(_pageViewEle);
 				checkPageViews();
 			});
 			ele && ele.addEventListener(aniEndName, function aniEnd2() {
 				leaved = true;
-				// 取消监听事件
-				ele.removeEventListener(aniEndName, aniEnd2);
+				cancelEvt(ele, aniEnd2);
 				M.removeClass(ele, aniLeaveClass);
 				cb();
 			});
+			function cancelEvt(ele, func) {
+				setTimeout(function() {
+					func && ele.removeEventListener(aniEndName, func);
+				});
+			}
 			function cb() {
 				if (!_pageViewEle) {
 					endCall && endCall();
+					checkPageViews();
+					var curIndex = M.Array.indexOfByKey(that.pagesCache, that.pageViewState, 'path');
+					curIndex >= 0 && that.pagesCache.splice(curIndex, 1);
+					that.pageViewState.route.destroyIns(that.pageViewState);
 					that.pageViewState = null;
 					that.defaultTemplate && M.innerHTML(that.viewsContainer, that.defaultTemplate);
+					return;
 				}
 				checkPageViews();
 			}
@@ -454,7 +468,7 @@
 
 			animation = curAnimation && prevAnimation && (!this._waiting || !options.first);
 			if (options.first) {
-				animation = animation && !this.isRoot;
+				animation = animation && !!this.$parentRoute;
 			}
 			return animation;
 		},
@@ -504,7 +518,7 @@
 				}
 				// routeView.templateCache = {};
 				routeView.pageViewState = null;
-				if (routeView.parentRouteEle != this.pageViewState.element) {
+				if (routeView.$parentRoute.ele() != this.pageViewState.element) {
 					routeView.setViewsContainer();
 				}
 				removeEle(routeView.maskEle);
@@ -543,14 +557,23 @@
 
 		// parse opts
 		M.each([
-			'cacheTemplate', 'viewClass', 'reloadOnSearch', 'regexp', '$regexp',
-			'keys', 'parentArgsLen', 'callback', 'getTemplate', 'onDestroy',
-			'onEnter', 'onLeave'
+			'cacheTemplate', 'viewClass', 'reloadOnSearch', 'redirectTo', 'redirectPushState',
+			'callback', 'getTemplate', 'onDestroy', 'onEnter', 'onLeave',
+			'regexp', '$regexp', 'keys', 'parentArgsLen'
 		], function(k) {
 			this[k] = opts[k];
 			delete opts[k];
 		}, this);
+		M.each(['reloadOnSearch', 'redirectPushState'], function(v) {
+			if (M.isUndefined(this[v])) this[v] = true;
+		}, this);
 
+		var redirectTo = this.redirectTo;
+		if (M.isString(redirectTo)) {
+			this.redirectTo = function() {
+				return redirectTo;
+			};
+		}
 		if (!this.parentArgsLen) this.parentArgsLen = 0;
 
 		this.options = opts;
@@ -570,20 +593,12 @@
 			var that = this;
 			var ins = null;
 			M.each(that.instances, function(_ins, index) {
-				if (_ins.path == path) {
-					if (that.reloadOnSearch) {
-						if (M.Object.equal(_ins.query, query)) {
-							ins = _ins;
-						}
-					} else {
-						ins = _ins;
-					}
-					if (ins) {
-						that.setActive(index);
-						ins.setOptions(options);
-						ins.setArgs(args);
-						return false;
-					}
+				if (that.checkEqual(_ins, path, query)) {
+					ins = _ins;
+					that.setActive(index);
+					ins.setOptions(options);
+					ins.setArgs(args);
+					return false;
 				}
 			});
 			if (ins) return ins;
@@ -591,6 +606,16 @@
 			this.instances.push(ins);
 			this.setActive(this.instances.length - 1);
 			return ins;
+		},
+
+		checkEqual: function(ins, path, query) {
+			if (ins.path === path) {
+				if (this.reloadOnSearch) {
+					return M.Object.equal(ins.query, query);
+				}
+				return true;
+			}
+			return false;
 		},
 
 		getIns: function(index) {
@@ -607,6 +632,11 @@
 
 		setRouteView: function(routeView) {
 			this.routeView = routeView;
+		},
+
+		ele: function() {
+			var ins = this.getActive() || null;
+			return ins && ins.element;
 		},
 
 		destroyIns: function(ins) {
@@ -654,6 +684,9 @@
 		setArgs: function(args) {
 			if (this.route.keys.length) {
 				_parseArgs(args, this.route.keys, this);
+				matchArgs(this); // 得到正确的参数
+			} else {
+				this.args = [];
 			}
 		},
 
@@ -664,6 +697,15 @@
 
 		setEle: function(ele) {
 			this.element = ele;
+		},
+
+		equalTo: function(url, update) {
+			var parsed = parseUrl(url);
+			if (parsed && this.route.checkEqual(this, parsed.path, parsed.query)) {
+				update && (this.query = parsed.query);
+				return true;
+			}
+			return false;
 		},
 
 		destroy: function() {
@@ -838,26 +880,25 @@
 	// 监听history的change
 	history.on('change', function(type, state, oldState) {
 		var first = false;
-		if (!oldState) {
-			// 第一次
-			first = true;
-		}
-
-		var url = state.url;
-		var path = history.getPath(url);
-		// 如果path为空 但是有base 说明 可以path为/
-		if (path || history.base || first) {
-			if (!path || path !== '/') path = '/' + (path || '');
-			var parsed = parseQuery(path);
-			Router.route(parsed.path, parsed.query, {
-				first: first,
-				direction: type,
-				state: state,
-				oldState: oldState
-			});
-		}
+		if (!oldState) first = true;
+		var parsed = parseUrl(state.url);
+		parsed && Router.route(parsed.path, parsed.query, {
+			first: first,
+			direction: type,
+			state: state,
+			oldState: oldState
+		});
 	});
 
+	function parseUrl(url) {
+		var path = history.getPath(url);
+		// 如果path为空 但是有base 说明 可以path为/
+		if (path || history.base) {
+			if (!path || path !== '/') path = '/' + (path || '');
+			return parseQuery(path);
+		}
+		return null;
+	}
 	function doCallback(routeIns, funcName) {
 		var f = routeIns.route[funcName];
 		return M.isFunction(f) && f.apply(routeIns, routeIns.args);
@@ -892,7 +933,11 @@
 			last = placeholder.lastIndex;
 		}
 		segment = pattern.substring(last);
-		compiled += quoteRegExp(segment);
+		if (segment === '?') {
+			compiled += '?';
+		} else {
+			compiled += quoteRegExp(segment);
+		}
 		if (opts.children) {
 			// 增加不带end $ 的正则
 			opts.$regexp = new RegExp(compiled, sensitive ? 'i' : undefined);
@@ -901,14 +946,12 @@
 		opts.regexp = new RegExp(compiled, sensitive ? 'i' : undefined);
 		return opts;
 	}
-
 	function quoteRegExp(string, pattern, isOptional) {
 		var result = string.replace(/[\\\[\]\^$*+?.()|{}]/g, '\\$&');
 		if (!pattern) return result;
 		var flag = isOptional ? '?' : '';
 		return result + flag + '(' + pattern + ')' + flag;
 	}
-
 	/**
 	 * 解析match到的参数
 	 * @param  {Array} match    匹配结果
@@ -930,11 +973,14 @@
 			match[j] = routeIns.params[key.name] = val;
 		}
 		
-		routeIns.args = [].slice.call(match);
+		routeIns.args = match;
 	}
 	function matchArgs(routeIns) {
 		var match = routeIns.args;
-		if (!match) return;
+		if (!match) {
+			routeIns.args = [];
+			return;
+		}
 		if (routeIns.route.keys.length) {
 			var pl = routeIns.route.parentArgsLen;
 			match.splice(0, pl);
@@ -942,7 +988,6 @@
 			match.length = 0;
 		}
 	}
-
 	/**
 	 * 根据url得到path和query
 	 * @param  {String} url url
@@ -970,7 +1015,6 @@
 			query: query
 		}
 	};
-
 	function scrollToHash(hash) {
 		var scrollToEle;
 		if (hash) {
