@@ -81,25 +81,26 @@
 			if (!options) options = {};
 			var ret = false;
 			var that = this;
-			cb = realPath && cb;
-			options.realPath = realPath;
 			for (var i = 0, el, _path, routeIns, keys; el = routes[i]; i++) {
 				var args = path.match(realPath && el.$regexp || el.regexp);
 				if (args) {
 					_path = args.shift();
 					routeIns = el.ins(_path, query || {}, args, options);
-					if (that.$parentRoute) {
-						var element = that.$parentRoute.ele();
-						if (!that.viewsContainer || !element || !M.hasClass(element, ENTERCLASS)) {
+					var p = that, pr, element;
+					while (p && (pr = p.$parentRoute)) {
+						element = pr.ele();
+						if (!that.viewsContainer || !element || !pr.actived()) {
 							// 初始化 但是默认匹配到的是 子路由 需要初始化 父路由
-							that.$parent.route(routeIns.path, routeIns.query, options, path, function() {
-								delete that.$parent.pageViewState.options.realPath;
+							options.matchIns = routeIns;
+							p.$parent.route(routeIns.path, routeIns.query, options, path, function() {
+								delete p.$parent.pageViewState.options.matchIns;
 								if (that.pageViewState && that.pageViewState.path === path) return;
 								that._waiting = true;
 								that._route(routeIns, cb);
 							});
 							return true;
 						}
+						p = p.$parent;
 					}
 					that._route(routeIns, cb);
 					ret = true;
@@ -297,12 +298,30 @@
 				}
 				routeIns.cached = false;
 			}
-			if (route.routeView) {
+			var routeView = route.routeView;
+			if (routeView) {
 				if (shown) {
-					route.routeView._transView(null, route.routeView.pageViewState, options, childDone);
+					routeView._transView(null, routeView.pageViewState, options, childDone);
 					return;
-				} else if (route.routeView.pageViewState && routeIns.options.realPath != route.routeView.pageViewState.path) {
-					route.routeView._transView(null, route.routeView.pageViewState, options);
+				} else if (routeView.pageViewState) {
+					var matchIns = routeIns.options.matchIns;
+					var matchRoute = matchIns.route;
+					var rv = routeView, childRV, finded = false;
+					while (!finded && rv && rv.pageViewState) {
+						childRV = rv.pageViewState.route.routeView;
+						if (matchRoute == rv.pageViewState.route) {
+							finded = true;
+							if (matchIns.path !== rv.pageViewState.path) {
+								rv._transView(null, rv.pageViewState, options);
+							}
+							childRV && childRV.pageViewState && childRV._transView(null, childRV.pageViewState, options);
+						} else {
+							rv = childRV;
+						}
+					}
+					if (!finded) {
+						routeView._transView(null, routeView.pageViewState, options);
+					}
 				}
 			}
 			this._transView(_pageViewEle, routeIns, options, endCall);
@@ -324,16 +343,16 @@
 				_endCall();
 			}
 			function setHtml() {
-				if (shown && route.routeView) {
-					if (route.routeView.defaultTemplate || !routeIns.cached) {
+				if (shown && routeView) {
+					if (routeView.defaultTemplate || !routeIns.cached) {
 						M.innerHTML(_pageViewEle, template);
 						routeIns.cached = false;
 					}
 				}
 			}
 			function _endCall() {
-				if (route.routeView) {
-					route.routeView.setViewsContainer(routeIns.element);
+				if (routeView) {
+					routeView.setViewsContainer(routeIns.element);
 				}
 				doCallback(routeIns, 'callback');
 				Router.trigger('routeChangeEnd', routeIns, routeIns.args);
@@ -390,6 +409,7 @@
 				// reflow
 				ele.offsetWidth = ele.offsetWidth;
 				doCallback(pageViewState, 'onLeave');
+				pageViewState.route.actived(false);
 			}
 			
 			if (_pageViewEle) {
@@ -557,6 +577,7 @@
 		this.instances = [];
 		this.path = path;
 		this.activeIndex = -1;
+		this._actived = false;
 
 		// parse opts
 		M.each([
@@ -567,15 +588,16 @@
 			this[k] = opts[k];
 			delete opts[k];
 		}, this);
-		M.each(['reloadOnSearch', 'redirectPushState'], function(v) {
-			if (M.isUndefined(this[v])) this[v] = true;
-		}, this);
+		if (M.isUndefined(this.reloadOnSearch)) this.reloadOnSearch = true;
 
 		var redirectTo = this.redirectTo;
 		if (M.isString(redirectTo)) {
 			this.redirectTo = function() {
 				return redirectTo;
 			};
+		}
+		if (this.redirectTo && M.isUndefined(this.redirectPushState)) {
+			this.redirectPushState = true;
 		}
 		if (!this.parentArgsLen) this.parentArgsLen = 0;
 
@@ -631,6 +653,7 @@
 
 		setActive: function(index) {
 			this.activeIndex = index;
+			this.actived(this.getIns(index));
 		},
 
 		setRouteView: function(routeView) {
@@ -640,6 +663,11 @@
 		ele: function() {
 			var ins = this.getActive() || null;
 			return ins && ins.element;
+		},
+
+		actived: function(v) {
+			if (M.isUndefined(v)) return this._actived;
+			this._actived = !!v;
 		},
 
 		destroyIns: function(ins) {
