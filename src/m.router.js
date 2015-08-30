@@ -82,6 +82,7 @@
 			var ret = false;
 			var that = this;
 			cb = realPath && cb;
+			options.realPath = realPath;
 			for (var i = 0, el, _path, routeIns, keys; el = routes[i]; i++) {
 				var args = path.match(realPath && el.$regexp || el.regexp);
 				if (args) {
@@ -92,6 +93,8 @@
 						if (!that.viewsContainer || !element || !M.hasClass(element, ENTERCLASS)) {
 							// 初始化 但是默认匹配到的是 子路由 需要初始化 父路由
 							that.$parent.route(routeIns.path, routeIns.query, options, path, function() {
+								delete that.$parent.pageViewState.options.realPath;
+								if (that.pageViewState && that.pageViewState.path === path) return;
 								that._waiting = true;
 								that._route(routeIns, cb);
 							});
@@ -298,7 +301,7 @@
 				if (shown) {
 					route.routeView._transView(null, route.routeView.pageViewState, options, childDone);
 					return;
-				} else if (route.routeView.pageViewState) {
+				} else if (route.routeView.pageViewState && routeIns.options.realPath != route.routeView.pageViewState.path) {
 					route.routeView._transView(null, route.routeView.pageViewState, options);
 				}
 			}
@@ -558,7 +561,7 @@
 		// parse opts
 		M.each([
 			'cacheTemplate', 'viewClass', 'reloadOnSearch', 'redirectTo', 'redirectPushState',
-			'callback', 'getTemplate', 'onDestroy', 'onEnter', 'onLeave',
+			'callback', 'getTemplate', 'onActive', 'onDestroy', 'onEnter', 'onLeave',
 			'regexp', '$regexp', 'keys', 'parentArgsLen'
 		], function(k) {
 			this[k] = opts[k];
