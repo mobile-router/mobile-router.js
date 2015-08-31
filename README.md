@@ -41,6 +41,9 @@ M.router.init([
 		getTemplate: function() { // sync
 			return '/index template content';
 		},
+		onActive: function() { // 1.5.5+ // called when the route is actived, even before create `page-view` element
+
+		},
 		callback: function() { // called after the page has been shown
 			if (this.cached) return; // the page was cached in document.
 			// do something ...
@@ -71,6 +74,44 @@ M.router.init([
 		},
 		onDestroy: function() {
 			// destroy
+		}
+	},
+	{ // support redirectTo , string url or function (1.5.5+)
+		path: '/redirectTo/:rtPath',
+		redirectPushState: false, // default true, enable `pushState` when redirectTo is actived
+		redirectTo: function(rtPath) {
+			console.log('redirectTo', arguments, this);
+			return '/' + rtPath;
+		}
+	},
+	{ // support redirectTo , string url or function (1.5.5+)
+		// if redirectTo route have getTemplate then the `page-view` will
+		// be created, looks like a normal route. The redirectTo will be actived
+		// after the route's callback is called
+		path: '/contacts',
+		getTemplate: contacts.getTemplate,
+		onEnter: contacts.onEnter,
+		onLeave: contacts.onLeave,
+		callback: contacts.controller,
+		onDestroy: contacts.onDestroy,
+
+		redirectTo: '/contacts/list',
+		redirectPushState: false,
+
+		children: { // Nested routes & views! (1.5.0+)
+			viewsSelector: '.content',
+			cacheViewsNum: 1,
+			routes: [
+				{
+					// all contacts
+					path: '/list',
+					getTemplate: list.getTemplate,
+					onEnter: list.onEnter,
+					onLeave: list.onLeave,
+					callback: list.controller,
+					onDestroy: list.onDestroy
+				}
+			]
 		}
 	},
 	{ // Nested routes & views! (1.5.0+)

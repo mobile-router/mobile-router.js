@@ -48,11 +48,15 @@
 	// 解析location或者a信息
 	var parseLocation = function(loc) {
 		if (!loc) loc = location;
+		var url = loc.href;
+		var hash = getHash(loc);
+		var rurl = trimUrl(url);
+		if (!hash) url = rurl;
 		return {
-			url: loc.href, // 完整 href
-			rurl: trimUrl(loc.href), // 去除hash的 href
+			url: url, // 完整 href
+			rurl: rurl, // 去除hash的 href
 			host: loc.host, // host
-			hash: getHash(loc), // hash 不带#
+			hash: hash, // hash 不带#
 			protocol: loc.protocol, // 协议
 			origin: loc.origin || (loc.protocol + '//' + loc.host), // origin
 			pathname: loc.pathname, // path
@@ -177,6 +181,32 @@
 			}
 		}
 		return target;
+	};
+	M.nextTick = new function() {
+		var tickImmediate = win.setImmediate;
+		var tickObserver = win.MutationObserver;
+		if (tickImmediate) { //IE10 \11 edage
+			return tickImmediate.bind(win);
+		}
+		var queue = []
+		function callback() {
+			var n = queue.length;
+			for (var i = 0; i < n; i++) {
+				queue[i]();
+			}
+			queue = queue.slice(n);
+		}
+		if (tickObserver) { // 支持MutationObserver
+			var node = document.createTextNode('M');
+			new tickObserver(callback).observe(node, {characterData: true});
+			return function(fn) {
+				queue.push(fn);
+				node.data = Math.random();
+			};
+		}
+		return function(fn) {
+			setTimeout(fn);
+		};
 	};
 
 	// 简单事件
@@ -304,80 +334,9 @@
 			$(ele).html(html);
 		};
 	} else {
-		M.innerHTML = function() {
-			var tagHooks = new function() {
-				M.extend(this, {
-					option: document.createElement('select'),
-					thead: document.createElement('table'),
-					td: document.createElement('tr'),
-					area: document.createElement('map'),
-					tr: document.createElement('tbody'),
-					col: document.createElement('colgroup'),
-					legend: document.createElement('fieldset'),
-					_default: document.createElement('div'),
-					'g': document.createElementNS('http://www.w3.org/2000/svg', 'svg')
-				});
-				this.optgroup = this.option;
-				this.tbody = this.tfoot = this.colgroup = this.caption = this.thead;
-				this.th = this.td;
-			};
-			'circle,defs,ellipse,image,line,path,polygon,polyline,rect,symbol,text,use'.replace(rword, function(tag) {
-				tagHooks[tag] = tagHooks.g; //处理SVG
-			});
-
-			var rtagName = /<([\w:]+)/;
-			var rxhtml = /<(?!area|br|col|embed|hr|img|input|link|meta|param)(([\w:]+)[^>]*)\/>/ig;
-			var scriptTypes = {
-				'': 1,
-				'text/javascript': 1,
-				'text/ecmascript': 1,
-				'application/ecmascript': 1,
-				'application/javascript': 1
-			};
-			var script = document.createElement('script');
-			var hyperspace = document.createDocumentFragment();
-
-			function parseHTML(html) {
-				if (typeof html !== 'string') html = html + '';
-				html = html.replace(rxhtml, '<$1></$2>').trim();
-				var tag = (rtagName.exec(html) || ['', ''])[1].toLowerCase(),
-						wrapper = tagHooks[tag] || tagHooks._default,
-						fragment = hyperspace.cloneNode(false),
-						firstChild;
-
-				wrapper.innerHTML = html;
-				var els = wrapper.getElementsByTagName('script');
-				var forEach = [].forEach;
-				if (els.length) {
-					//使用innerHTML生成的script节点不会发出请求与执行text属性
-					for (var i = 0, el, neo; el = els[i++]; ) {
-						if (scriptTypes[el.type]) {
-							neo = script.cloneNode(false);
-							each(el.attributes, function(attr) {
-								neo.setAttribute(attr.name, attr.value);
-							});
-							neo.text = el.text;
-							el.parentNode.replaceChild(neo, el);
-						}
-					}
-				}
-
-				while (firstChild = wrapper.firstChild) {
-					// 将wrapper上的节点转移到文档碎片上！
-					fragment.appendChild(firstChild);
-				}
-				return fragment;
-			}
-
-			return function(ele, html) {
-				var f = parseHTML(html);
-				// 先清空 ele 内容
-				ele.innerHTML = '';
-				ele.appendChild(f);
-				f = null;
-			};
-
-		}();
+		M.innerHTML = function(ele, html) {
+			ele.innerHTML = html;
+		};
 	}
 
 	// 暴露到M上
@@ -429,17 +388,6 @@
 					return target.push(item);
 				}
 			},
-			/*移除数组中指定位置的元素，返回布尔表示成功与否*/
-			removeAt: function(target, index) {
-				return !!target.splice(index, 1).length;
-			},
-			/*移除数组中第一个匹配传参的那个元素，返回布尔表示成功与否*/
-			remove: function(target, item) {
-				var index = target.indexOf(item);
-				if (~index)
-					return M.Array.removeAt(target, index);
-				return false;
-			},
 			/*得到在target数组中具有相同key的值的位置*/
 			indexOfByKey: function(target, item, key) {
 				var val = item[key];
@@ -450,35 +398,10 @@
 				}
 				return -1;
 			}
-		},
-
-		Object: {
-			create: Object.create || function(proto) {
-				return {
-					__proto__: proto
-				};
-			},
-			setPrototypeOf: Object.setPrototypeOf || function(object, proto) {
-				object.__proto__ = proto;
-				return object;
-			},
-			getPrototypeOf: Object.getPrototypeOf || function(object) {
-				return object.__proto__;
-			},
-			keys: Object.keys || function(object) {
-				var ret = [];
-				for (var k in object) {
-					if (object.hasOwnProperty(k)) {
-						ret.push(k);
-					}
-				}
-				return ret;
-			}
 		}
 	});
 
 	return M;
-
 });
 
 ;(function(win, factory) {
@@ -841,71 +764,24 @@
 })(this, function(win, M, history) {
 
 	// clone fx https://github.com/RubyLouvre/mmRouter/blob/master/mmRouter.js
-	/**
-	 * 根据url得到path和query
-	 * @param  {String} url url
-	 * @return {Object}     path和query信息
-	 */
-	var parseQuery = function(url) {
-		var array = url.split('?'),
-				query = {},
-				path = array[0],
-				querystring = array[1];
-
-		if (querystring) {
-			var seg = querystring.split('&'),
-					len = seg.length, i = 0, s;
-			for (; i < len; i++) {
-				if (!seg[i]) {
-					continue;
-				}
-				s = seg[i].split('=');
-				query[decodeURIComponent(s[0])] = decodeURIComponent(s[1]);
-			}
-		}
-		return {
-			path: path,
-			query: query
-		}
-	};
-
 	// url模式参数匹配
 	var placeholder = /([:*])(\w+)|\{(\w+)(?:\:((?:[^{}\\]+|\\.|\{(?:[^{}\\]+|\\.)*\})+))?\}/g;
-
 	// 是否已初始化
 	var inited = false;
-	
 	var defViewClass = 'page-view';
-
 	var ENTERCLASS = 'in';
-
 	// 默认配置
 	var defOptions = {
-
-		/*是否缓存模板*/
-		cacheTemplate: true,
-
-		/*views容器选择器*/
-		viewsSelector: '',
-
-		/*view的class 默认都会有 page-view 的 class */
-		viewClass: '',
-
-		/*是否有动画*/
-		animation: true,
-		/*类型*/
-		aniClass: 'slide',
-
-		/*蒙层class*/
-		maskClass: 'mask',
-		/*显示loading*/
-		showLoading: true,
-
-		/*缓存view数*/
-		cacheViewsNum: 3
-
+		cacheTemplate: true, /*是否缓存模板*/
+		viewsSelector: '', /*views容器选择器*/
+		viewClass: '', /*view的class 默认都会有 page-view 的 class */
+		animation: true, /*是否有动画*/
+		aniClass: 'slide', /*类型*/
+		maskClass: 'mask', /*蒙层class*/
+		showLoading: true, /*显示loading*/
+		cacheViewsNum: 3 /*缓存view数*/
 	};
-	var defOptionsKeys = M.Object.keys(defOptions);
+	var defOptionsKeys = Object.keys(defOptions);
 
 	// 蒙层元素
 	var maskEle = M.document.createElement('div');
@@ -925,108 +801,64 @@
 		return 'animationend';
 	}());
 
-	function RouteView(parentRouteObj, parentRouterView, options) {
-		if (parentRouteObj) {
-			parentRouteObj.$routeView = this;
+	function RouteView(parentRoute, parentRouterView, options) {
+		if (parentRoute) {
+			parentRoute.setRouteView(this);
+			this.$parentRoute = parentRoute;
 		} else {
-			this.$root = true;
+			this.$parentRoute = null;
 		}
-		if (parentRouterView) {
-			this.$parent = parentRouterView;
-		}
+		if (parentRouterView) this.$parent = parentRouterView;
 
 		this.routes = [];
-
-		this.$parentRouteEle = null;
-
-		/*蒙层元素*/
 		this.maskEle = null;
 		/*当前pageview状态对象*/
 		this.pageViewState = null;
-		/*views容器*/
 		this.viewsContainer = null;
-
 		this.options = options;
-
-		// page的route state缓存
 		this.pagesCache = [];
-		// 模板缓存
 		this.templateCache = {};
 
 		// view的cache数量不能少于1
 		if (this.options.cacheViewsNum < 1) {
 			this.options.cacheViewsNum = 1;
 		}
-		if (!parentRouteObj) {
+		if (!parentRoute) {
 			this.setViewsContainer(M.document.body);
 		}
 	}
-	var routeKeys = ['cacheTemplate', 'callback', 'getTemplate', '$regexp',
-		'regexp', 'viewClass', 'keys', 'onDestroy', 'pattern', '$routeView',
-		'$parentArgsLen', 'onEnter', 'onLeave']
 	M.extend(RouteView.prototype, {
 
 		route: function(path, query, options, realPath, cb) {
-			var states = this.routes;
+			var routes = this.routes;
 			if (!options) options = {};
 			var ret = false;
 			var that = this;
-			for (var i = 0, el; el = states[i]; i++) {
+			for (var i = 0, el, _path, routeIns, keys; el = routes[i]; i++) {
 				var args = path.match(realPath && el.$regexp || el.regexp);
 				if (args) {
-					var _path = args[0];
-					if (el.element) {
-						// 一条路由规则可能会对应着N个pageview
-						var finded = false;
-						while (el) {
-							if (el.path === _path) {
-								finded = true;
-								break;
-							}
-							if (el.$child) {
-								el = el.$child;
-							} else {
-								break;
-							}
-						}
-						if (!finded) {
-							// 有元素
-							var _el = el;
-							// 克隆新的一份
-							el = M.Object.create(_el);
-							routeKeys.forEach(function(k) {
-								el[k] = _el[k];
+					_path = args.shift();
+					routeIns = el.ins(_path, query || {}, args, options);
+					var p = that, pr, element;
+					while (p && (pr = p.$parentRoute)) {
+						element = pr.ele();
+						if (!that.viewsContainer || !element || !pr.actived()) {
+							// 初始化 但是默认匹配到的是 子路由 需要初始化 父路由
+							that.$parent.route(routeIns.path, routeIns.query, M.extend({matchIns: routeIns}, options), path, function() {
+								delete that.$parent.pageViewState.options.matchIns;
+								if (that.pageViewState && that.pageViewState.path === path) return;
+								that._waiting = true;
+								that._route(routeIns, cb);
 							});
-							el.$child = null;
-							_el.$child = el;
-							states[i] = el;
+							return true;
 						}
+						p = p.$parent;
 					}
-					el.query = query || {};
-					el.path = _path;
-					el.params = {};
-					el.historyOptions = options;
-					var keys = el.keys;
-					args.shift();
-					if (keys.length) {
-						_parseArgs(args, el);
-					}
-					if (!that.$root && (!that.viewsContainer || !M.hasClass(that.$parentRouteEle, ENTERCLASS))) {
-						// 初始化 但是默认匹配到的是 子路由 需要初始化 父路由
-						that.$parent.route(el.path, el.query, options, path, function() {
-							that._waiting = true;
-							route(el);
-						});
-						return true;
-					}
-					// else {
-					// 	that._waiting = true;
-					// }
-					route(el);
+					that._route(routeIns, cb);
 					ret = true;
 				} else if (!realPath) {
-					if (el.$routeView) {
-						ret = el.$routeView.route(path, query, options);
+					if (el.routeView) {
+						ret = el.routeView.route(path, query, options);
 					}
 				}
 				if (ret) {
@@ -1034,64 +866,77 @@
 				}
 			}
 			return ret;
-			function route(el) {
-				// 缓存模板
-				var cacheTemplate = that.getOption(el, options.state, 'cacheTemplate');
-				var id = M.getUIDByKey(el.path);
-				if (options.first) {
-					var initView = that.viewsContainer.getElementsByClassName(defViewClass)[0];
-					if (initView) {
-						if (!initView.id || initView.id == id) {
-							that.templateCache[el.path] = initView.innerHTML;
-							cacheTemplate = true;
-						}
-					}
-				}
-				matchArgs(el); // 得到正确的参数
-				if (M.isString(cacheTemplate)) cacheTemplate = cacheTemplate === 'true';
-				// 这里加上 得到模板
-				if (!(cacheTemplate && that.templateCache[el.path]) && el.getTemplate) {
-					Router.trigger('routeChangeStart', el, el.args);
-					that.showLoading();
-					if (el.getTemplate.length) {
-						that._waiting = false;
-						// 有参数 则需要回调 主要场景是异步得到模板
-						// 或者先需要数据 然后利用模板引擎得到结果字符串
-						el.getTemplate(getTemplateCb);
-					} else {
-						getTemplateCb(el.getTemplate());
-					}
-				} else {
-					Router.trigger('routeChangeStart', el, el.args);
-					getTemplateCb(that.templateCache[el.path]);
+		},
+
+		_redirectTo: function(routeIns, async) {
+			var route = routeIns.route;
+			var rtUrl;
+			if (route.redirectTo && (rtUrl = doCallback(routeIns, 'redirectTo'))) {
+				if (!routeIns.equalTo(rtUrl, true)) {
+					if (async) M.nextTick(reT);
+					else reT();
+					return true;
 				}
 			}
+			return false;
+			function reT() {
+				!routeIns.element && route.destroyIns(routeIns);
+				var data = {};
+				if (!async) data.redirectToSync = true;
+				if (!route.redirectPushState) data.href = rtUrl;
+				M.router.navigate(rtUrl, data);
+			}
+		},
+
+		_route: function(routeIns, cb) {
+			var route = routeIns.route;
+			var that = this;
+			// 缓存模板
+			var cacheTemplate = this.getOption(route, routeIns.options.state, 'cacheTemplate');
+			var id = M.getUIDByKey(routeIns.path);
+			var initView;
+			if (routeIns.options.first &&
+					(initView = this.viewsContainer.getElementsByClassName(defViewClass)[0]) &&
+					(!initView.id || initView.id === id)
+				) {
+				this.templateCache[routeIns.path] = initView.innerHTML;
+				cacheTemplate = true;
+			}
+			if (M.isString(cacheTemplate)) cacheTemplate = cacheTemplate === 'true';
+			// 这里加上 得到模板
+			var args = routeIns.args;
+			if (!(cacheTemplate && this.templateCache[routeIns.path]) && route.getTemplate) {
+				doCallback(routeIns, 'onActive');
+				Router.trigger('routeChangeStart', routeIns, args);
+				this.showLoading();
+				if (route.getTemplate.length > 0) {
+					this._waiting = false;
+					// 有参数 则需要回调 主要场景是异步得到模板
+					route.getTemplate.call(routeIns, getTemplateCb);
+				} else {
+					getTemplateCb(route.getTemplate.call(routeIns));
+				}
+			} else {
+				if (!route.getTemplate && !cb && this._redirectTo(routeIns, true)) {
+					return;
+				}
+				doCallback(routeIns, 'onActive');
+				Router.trigger('routeChangeStart', routeIns, args);
+				getTemplateCb(this.templateCache[routeIns.path]);
+			}
 			function getTemplateCb(template) {
-				that.getTemplateCb(el, template, realPath && cb);
+				that.getTemplateCb(routeIns, template, cb);
 			}
 		},
 
 		setViewsContainer: function(ele) {
-			this.$parentRouteEle = ele;
 			var viewsContainer;
 			var viewsSelector;
 			if (ele) {
-				// 根据viewsSelector得到views容器元素
 				viewsSelector = this.options.viewsSelector;
 				viewsContainer = viewsSelector && ele.querySelector(viewsSelector);
-				if (!viewsContainer) {
-					viewsContainer = ele;
-				}
 			}
-			this.viewsContainer = viewsContainer || null;
-		},
-
-		/**
-		 * 设置是否有动画
-		 * @param  {Boolean} ani 是否有动画
-		 */
-		animate: function(ani) {
-			this.options.animation = !!ani;
+			this.viewsContainer = viewsContainer || ele || null;
 		},
 
 		/**
@@ -1148,40 +993,32 @@
 
 		/**
 		 * 得到模板后callback
-		 * @param  {Object} state    route对象
-		 * @param  {String} template 模板字符串
-		 * @param  {Function}  cb    完成后回调
+		 * @param  {RouteIns} routeIns    RouteIns实例
+		 * @param  {String}   template 模板字符串
+		 * @param  {Function} cb    完成后回调
 		 */
-		getTemplateCb: function(state, template, cb) {
+		getTemplateCb: function(routeIns, template, cb) {
 			this.hideLoading();
-			state._oldTemplate = this.templateCache[state.path];
-			this.templateCache[state.path] = template;
+			routeIns._oldTemplate = this.templateCache[routeIns.path];
+			this.templateCache[routeIns.path] = template;
 
 			var that = this;
-			var options = state.historyOptions; // 带过来的options
+			var options = routeIns.options; // 带过来的options
 			var first = options.first || !this.pageViewState;
 			var nowView;
-			var id = M.getUIDByKey(state.path);
+			var id = M.getUIDByKey(routeIns.path);
 			if (first) {
 				options.first = first;
 				nowView = this.viewsContainer.getElementsByClassName(defViewClass)[0];
-				if (this.maskEle) {
-					if (this.maskEle.parentNode) {
-						this.maskEle.parentNode.removeChild(this.maskEle);
-					} else {
-						this.maskEle = null;
-					}
-				}
-				if (this.viewsContainer && this.viewsContainer !== this.$parentRouteEle) {
+				removeEle(this.maskEle);
+				if (this.viewsContainer && this.$parentRoute && this.viewsContainer !== this.$parentRoute.ele()) {
 					this.defaultTemplate = this.viewsContainer.innerHTML;
 					if (!nowView) {
 						M.innerHTML(this.viewsContainer, '');
 						this.maskEle = null;
 					}
 				}
-				if (this.maskEle) {
-					this.viewsContainer.appendChild(this.maskEle);
-				}
+				this.maskEle && this.viewsContainer.appendChild(this.maskEle);
 			}
 
 			var _pageViewEle = M.document.getElementById(id);
@@ -1190,70 +1027,100 @@
 				_pageViewEle = nowView || M.document.createElement('div');
 				_pageViewEle.id = id;
 				// 是新的
-				state.cached = false;
+				routeIns.cached = false;
 				!nowView && this.viewsContainer.appendChild(_pageViewEle);
 			} else {
-				state.cached = true;
+				routeIns.cached = true;
 			}
 
-			var shown = false;
-			if (state.$routeView) {
-				shown = M.hasClass(_pageViewEle, ENTERCLASS);
+			var shown = M.hasClass(_pageViewEle, ENTERCLASS);
+			var route = routeIns.route;
+			var redirected = false;
+			if (shown && routeIns.element === _pageViewEle && that._redirectTo(routeIns, true)) {
+				redirected = true;
+				childDone();
+				return;
 			}
 			// 模板不一样 更新
-			if ((!state.cached && !nowView) || template !== state._oldTemplate) {
+			if ((!routeIns.cached && !nowView) || template !== routeIns._oldTemplate) {
 				if (!shown) {
 					M.innerHTML(_pageViewEle, template);
 				}
-				state.cached = false;
+				routeIns.cached = false;
 			}
-			
-			if (state.$routeView) {
+			var routeView = route.routeView;
+			if (routeView) {
 				if (shown) {
-					state.$routeView._transView(null, state.$routeView.pageViewState, options, childDone);
+					if (routeView.pageViewState) {
+						routeView._transView(null, routeView.pageViewState, options, childDone);
+					} else {
+						childDone();
+					}
 					return;
-				} else if (state.$routeView.pageViewState) {
-					state.$routeView._transView(null, state.$routeView.pageViewState, options);
+				} else if (routeView.pageViewState) {
+					var matchIns = routeIns.options.matchIns;
+					var finded = false, matchRoute;
+					if (matchIns) {
+						matchRoute = matchIns.route;
+						var rv = routeView, childRV;
+						while (!finded && rv && rv.pageViewState) {
+							childRV = rv.pageViewState.route.routeView;
+							if (matchRoute == rv.pageViewState.route) {
+								finded = true;
+								if (matchIns.path !== rv.pageViewState.path) {
+									rv._transView(null, rv.pageViewState, options);
+								}
+								childRV && childRV.pageViewState && childRV._transView(null, childRV.pageViewState, options);
+							} else {
+								rv = childRV;
+							}
+						}
+					}
+					
+					if (!finded) {
+						routeView._transView(null, routeView.pageViewState, options);
+					}
 				}
 			}
-			this._transView(_pageViewEle, state, options, endCall);
+			this._transView(_pageViewEle, routeIns, options, endCall);
 			function endCall(element) {
-				state.element = element;
-				var index = M.Array.indexOfByKey(that.pagesCache, state,  'path');
+				routeIns.setEle(element);
+				var index = M.Array.indexOfByKey(that.pagesCache, routeIns,  'path');
 				if (~index) {
 					// 移掉当前的
 					that.pagesCache.splice(index, 1);
 				}
-				that.pagesCache.push(state);
-				that.pageViewState = state;
+				that.pagesCache.push(routeIns);
+				that.pageViewState = routeIns;
 				setHtml();
 				_endCall();
 			}
 			function childDone() {
 				setHtml();
-				state.onEnter && state.onEnter.apply(state, state.args);
+				doCallback(routeIns, 'onEnter');
 				_endCall();
 			}
 			function setHtml() {
-				if (shown) {
-					if (state.$routeView.defaultTemplate || !state.cached) {
+				if (shown && routeView) {
+					if (routeView.defaultTemplate || !routeIns.cached) {
 						M.innerHTML(_pageViewEle, template);
-						state.cached = false;
+						routeIns.cached = false;
 					}
 				}
 			}
 			function _endCall() {
-				if (state.$routeView) {
-					state.$routeView.setViewsContainer(state.element);
+				if (routeView) {
+					routeView.setViewsContainer(routeIns.element);
 				}
-				state.callback.apply(state, state.args);
-				Router.trigger('routeChangeEnd', state, state.args);
+				doCallback(routeIns, 'callback');
+				Router.trigger('routeChangeEnd', routeIns, routeIns.args);
 				cb && cb();
 				delete that._waiting;
+				!redirected && !cb && that._redirectTo(routeIns);
 			}
 		},
 
-		_transView: function(_pageViewEle, state, options, endCall) {
+		_transView: function(_pageViewEle, routeIns, options, endCall) {
 			var enterClass = ENTERCLASS;
 			var leaveClass = 'out';
 			var initPosClass = leaveClass;
@@ -1263,6 +1130,7 @@
 			var overhidden = 'overhidden';
 
 			var pageViewState = this.pageViewState;
+			var ele = pageViewState && pageViewState.element;
 			var that = this;
 
 			if (_pageViewEle) {
@@ -1271,15 +1139,15 @@
 				M.addClass(_pageViewEle, defViewClass + ' ' + this.options.viewClass);
 			}
 			
-			var animation = this._shouldAni(this.options.animation, state, options);
-			animation = animation && !!endCall;
+			var animation = this._shouldAni(this.options.animation, routeIns, options);
+			animation = animation && !!endCall && !routeIns.redirectTo && !routeIns.options.state.data.redirectToSync;
 			
 			if (animation) {
 				var aniEnterClass = aniClass;
 				var aniLeaveClass = aniClass;
-				aniEnterClass += ' ' + this.getOption(state, options.state, 'aniClass');
+				aniEnterClass += ' ' + this.getOption(routeIns.route, options.state, 'aniClass');
 				if (!options.first) {
-					aniLeaveClass += ' ' + this.getOption(pageViewState, options.oldState, 'aniClass');
+					aniLeaveClass += ' ' + this.getOption(pageViewState.route, options.oldState, 'aniClass');
 				}
 
 				enterClass = aniEnterClass + ' ' + enterClass;
@@ -1293,12 +1161,13 @@
 				leaveClass += ' ' + reverseClass;
 			}
 
-			if (pageViewState) {
-				M.removeClass(pageViewState.element, allClass);
-				M.addClass(pageViewState.element, leaveClass);
+			if (ele) {
+				M.removeClass(ele, allClass);
+				M.addClass(ele, leaveClass);
 				// reflow
-				pageViewState.element.offsetWidth = pageViewState.element.offsetWidth;
-				pageViewState.onLeave && pageViewState.onLeave.apply(pageViewState, pageViewState.args);
+				ele.offsetWidth = ele.offsetWidth;
+				doCallback(pageViewState, 'onLeave');
+				pageViewState.route.actived(false);
 			}
 			
 			if (_pageViewEle) {
@@ -1307,18 +1176,12 @@
 				M.addClass(_pageViewEle, enterClass);
 				// reflow
 				_pageViewEle.offsetWidth = _pageViewEle.offsetWidth;
-				state.onEnter && state.onEnter.apply(state, state.args);
+				doCallback(routeIns, 'onEnter');
 			}
 			
-			if (!state.cached) {
-				// 增加对hash处理 有时候浏览器不能滚动到响应的
-				// 带有hash id 的元素位置
-				var hash = options.state.hash;
-				var scrollToEle;
-				if (hash) {
-					scrollToEle = M.document.getElementById(hash);
-					scrollToEle && scrollToEle.scrollIntoView();
-				}
+			if (!routeIns.cached && options.state.hash) {
+				// 滚动到指定hash元素位置
+				scrollToHash(options.state.hash);
 			}
 
 			var entered = false;
@@ -1329,68 +1192,64 @@
 				entered = true;
 				leaved = true;
 				endCall && endCall(_pageViewEle);
-				if (!_pageViewEle) {
-					that.pageViewState = null;
-					if (that.defaultTemplate) M.innerHTML(that.viewsContainer, that.defaultTemplate);
-				}
-				checkPageViews();
+				endCall = null;
+				cb();
 				return;
 			}
 			_pageViewEle && _pageViewEle.addEventListener(aniEndName, function aniEnd() {
-				// enter了
 				entered = true;
-				// 取消监听事件
-				_pageViewEle.removeEventListener(aniEndName, aniEnd);
+				cancelEvt(_pageViewEle, aniEnd);
 				M.removeClass(_pageViewEle, aniEnterClass);
 				endCall && endCall(_pageViewEle);
 				checkPageViews();
-
-				aniEnd = null;
 			});
-			pageViewState && pageViewState.element.addEventListener(aniEndName, function aniEnd2() {
-				// leave了
+			ele && ele.addEventListener(aniEndName, function aniEnd2() {
 				leaved = true;
-				// 取消监听事件
-				pageViewState.element.removeEventListener(aniEndName, aniEnd2);
-				M.removeClass(pageViewState.element, aniLeaveClass);
+				cancelEvt(ele, aniEnd2);
+				M.removeClass(ele, aniLeaveClass);
+				cb();
+			});
+			function cancelEvt(ele, func) {
+				setTimeout(function() {
+					func && ele.removeEventListener(aniEndName, func);
+				});
+			}
+			function cb() {
 				if (!_pageViewEle) {
 					endCall && endCall();
+					checkPageViews();
+					var curIndex = M.Array.indexOfByKey(that.pagesCache, that.pageViewState, 'path');
+					curIndex >= 0 && that.pagesCache.splice(curIndex, 1);
+					that.pageViewState.route.destroyIns(that.pageViewState);
 					that.pageViewState = null;
-					if (that.defaultTemplate) M.innerHTML(that.viewsContainer, that.defaultTemplate);
+					that.defaultTemplate && M.innerHTML(that.viewsContainer, that.defaultTemplate);
+					return;
 				}
-				// pageViewState.element.style.display = 'none';
 				checkPageViews();
-
-				aniEnd2 = null;
-				pageViewState = null;
-			});
-
+			}
 			function checkPageViews() {
 				setTimeout(function() {
 					M.removeClass(that.viewsContainer, overhidden);
-				});
+				}, 100);
 				// 还有没完成的
 				if (!entered || !leaved) return;
 				that.checkPageViews();
 			}
 		},
 
-		_shouldAni: function(animation, state, options) {
-			var curAnimation = this.getOption(state, options.state, 'animation');
+		_shouldAni: function(animation, routeIns, options) {
+			var curAnimation = this.getOption(routeIns.route, options.state, 'animation');
 			var prevAnimation = animation;
 			if (!options.first) {
-				prevAnimation = this.getOption(this.pageViewState, options.oldState, 'animation');
+				prevAnimation = this.getOption(this.pageViewState.route, options.oldState, 'animation');
 			}
 
 			curAnimation = curAnimation == true || curAnimation == 'true' ? true : false;
 			prevAnimation = prevAnimation == true || prevAnimation == 'true' ? true : false;
 
-			// 决定了第一次load的时候第一个view（需要加载模板的情况下）是否启用动画
-			// 如果不需要加载模板或者直接同步获得template的话 也是不启用的
-			// animation = curAnimation && prevAnimation && (!this._waiting && !this.$root || !options.first);
 			animation = curAnimation && prevAnimation && (!this._waiting || !options.first);
 			if (options.first) {
-				animation = animation && !this.$root;
+				animation = animation && !!this.$parentRoute;
 			}
 			return animation;
 		},
@@ -1415,56 +1274,40 @@
 				newRight = pagesCache.length - 1;
 			}
 			while (newLeft > 0) {
-				this.destroyState(pagesCache.shift());
+				this.destroyRouteIns(pagesCache.shift());
 				newLeft--;
 				newRight--;
 			}
 			while (newRight < pagesCache.length - 1) {
-				this.destroyState(pagesCache.pop());
+				this.destroyRouteIns(pagesCache.pop());
 			}
 		},
 
 		/**
-		 * 销毁state
-		 * @param  {Object} state route state
+		 * 销毁 routeIns
+		 * @param  {RouteIns} routeIns RouteIns实例
 		 */
-		destroyState: function(state) {
-			if (state.$routeView) {
+		destroyRouteIns: function(routeIns) {
+			var route = routeIns.route;
+			var routeView = route.routeView;
+			if (routeView) {
 				// destroy child
-				var _state = state.$routeView.pagesCache.pop();
-				while (_state) {
-					state.$routeView.destroyState(_state);
-					_state = state.$routeView.pagesCache.pop();
+				var ins = routeView.pagesCache.shift();
+				while (ins) {
+					routeView.destroyRouteIns(ins);
+					ins = routeView.pagesCache.shift();
 				}
-				// state.$routeView.templateCache = {};
-				state.$routeView.setViewsContainer();
-				state.$routeView.pageViewState = null;
-				var _ms = state.$routeView.maskEle;
-				_ms && _ms.parentNode.removeChild(_ms);
-				state.$routeView.maskEle = null;
-				state.$routeView = null;
+				// routeView.templateCache = {};
+				routeView.pageViewState = null;
+				if (routeView.$parentRoute.ele() != this.pageViewState.element) {
+					routeView.setViewsContainer();
+				}
+				removeEle(routeView.maskEle);
+				routeView.maskEle = null;
 			}
-			// 如果存在destroy
-			if (M.isFunction(state.onDestroy)) {
-				state.onDestroy();
-			}
-			try {
-				state.element && state.element.parentNode.removeChild(state.element);
-			} catch(e) {
-				debugger;
-			}
-			state.element = null;
-			var p = M.Object.getPrototypeOf(state);
-			if (p && p.$child) {
-				// prototype 的 child 就是当前的 state
-				p.$child = state.$child || null;
-			}
-			if (state.$child) {
-				M.Object.setPrototypeOf(state.$child, p || null);
-				state.$child = null;
-			}
-			M.Object.setPrototypeOf(state, null);
-			state = null;
+			doCallback(routeIns, 'onDestroy');
+			route.destroyIns(routeIns);
+			routeIns = null;
 		},
 
 		/**
@@ -1475,7 +1318,193 @@
 			return this.templateCache;
 		}
 
-		
+	});
+
+	function Route(path, callback, opts) {
+		opts = opts || {};
+		opts.callback = callback || M.noop;
+		if (path.length > 2 && path.charAt(path.length - 1) === '/') {
+			path = path.slice(0, -1);
+			opts.last = '/';
+		}
+		opts = _pathToRegExp(path, opts);
+		delete opts.path;
+		delete opts.last;
+
+		this.routeView = null;
+		this.instances = [];
+		this.path = path;
+		this.activeIndex = -1;
+		this._actived = false;
+
+		// parse opts
+		M.each([
+			'cacheTemplate', 'viewClass', 'redirectTo', 'redirectPushState',
+			'callback', 'getTemplate', 'onActive', 'onDestroy', 'onEnter', 'onLeave',
+			'regexp', '$regexp', 'keys', 'parentArgsLen'
+		], function(k) {
+			this[k] = opts[k];
+			delete opts[k];
+		}, this);
+
+		var redirectTo = this.redirectTo;
+		if (M.isString(redirectTo)) {
+			this.redirectTo = function() {
+				return redirectTo;
+			};
+		}
+		if (this.redirectTo && M.isUndefined(this.redirectPushState)) {
+			this.redirectPushState = true;
+		}
+		if (!this.parentArgsLen) this.parentArgsLen = 0;
+
+		this.options = opts;
+	}
+
+	M.extend(Route.prototype, {
+
+		/**
+		 * 创建返回新的实例（如果能找到就不用创建新的）
+		 * @param  {String}   path    新的path
+		 * @param  {Object}   query   query信息
+		 * @param  {Array}    args    args匹配参数
+		 * @param  {Object}   options 额外信息
+		 * @return {RouteIns}         得到的RouteIns实例
+		 */
+		ins: function(path, query, args, options) {
+			var that = this;
+			var ins = null;
+			M.each(that.instances, function(_ins, index) {
+				if (that.checkEqual(_ins, path, query)) {
+					ins = _ins;
+					that.setActive(index);
+					ins.setOptions(options);
+					ins.setArgs(args);
+					return false;
+				}
+			});
+			if (ins) return ins;
+			ins = new RouteIns(this, path, query, args, options);
+			this.instances.push(ins);
+			this.setActive(this.instances.length - 1);
+			return ins;
+		},
+
+		checkEqual: function(ins, path, query) {
+			return ins.path === path;
+		},
+
+		getIns: function(index) {
+			return this.instances[index];
+		},
+
+		getActive: function() {
+			return this.getIns(this.activeIndex);
+		},
+
+		setActive: function(index) {
+			this.activeIndex = index;
+			this.actived(this.getIns(index));
+		},
+
+		setRouteView: function(routeView) {
+			this.routeView = routeView;
+		},
+
+		ele: function() {
+			var ins = this.getActive() || null;
+			return ins && ins.element;
+		},
+
+		actived: function(v) {
+			if (M.isUndefined(v)) return this._actived;
+			this._actived = !!v;
+		},
+
+		destroyIns: function(ins) {
+			if (!ins) return;
+			var preIns, nextIns;
+			if (this.getActive() === ins) {
+				this.instances.splice(this.activeIndex, 1);
+				this.setActive(-1);
+				ins.destroy();
+				return;
+			}
+			M.each(this.instances, function(_ins, i) {
+				if (_ins === ins) {
+					this.instances.splice(i ,1);
+					if (this.activeIndex > i) {
+						this.setActive(this.activeIndex - 1);
+					}
+					ins.destroy();
+					return false;
+				}
+			}, this);
+		}
+
+	});
+
+	/**
+	 * Route 的实例构造函数
+	 */
+	function RouteIns(route, path, query, args, options) {
+		this.route = route;
+		this.path = path;
+		this.query = query;
+		this.options = options;
+		this.params = {};
+		this.args = null;
+		this.element = null;
+		this.cached = false;
+		this._oldTemplate = '';
+		this.destroyed = false;
+		this.setArgs(args);
+	}
+
+	M.extend(RouteIns.prototype, {
+
+		setArgs: function(args) {
+			if (this.route.keys.length) {
+				_parseArgs(args, this.route.keys, this);
+				matchArgs(this); // 得到正确的参数
+			} else {
+				this.args = [];
+			}
+		},
+
+		setOptions: function(options) {
+			if (this.destroyed) return;
+			this.options = options;
+		},
+
+		setEle: function(ele) {
+			this.element = ele;
+		},
+
+		equalTo: function(url, update) {
+			var parsed = parseUrl(url);
+			if (parsed && this.route.checkEqual(this, parsed.path, parsed.query)) {
+				update && (this.query = parsed.query);
+				return true;
+			}
+			return false;
+		},
+
+		destroy: function() {
+			if (this.destroyed) return;
+			this.route = null;
+			this.path = '';
+			this.query = null;
+			this.options = null;
+			this.params = null;
+			this.args = null;
+			if (this.element) {
+				removeEle(this.element);
+			}
+			this.element = null;
+			this.destroyed = true;
+		}
+
 	});
 
 	var Router = {
@@ -1502,7 +1531,7 @@
 			}
 			var childOptions = {};
 			M.extend(childOptions, defOptions, options || {});
-			this.$routeView = new RouteView(null, null, childOptions);
+			this.routeView = new RouteView(null, null, childOptions);
 			this._add(routes);
 		},
 
@@ -1514,7 +1543,7 @@
 		 */
 		route: function(path, query, options) {
 			path = path.trim();
-			var finded = this.$routeView.route(path, query, options);
+			var finded = this.routeView.route(path, query, options);
 			if (!finded && this.errorback) {
 				this.errorback(path, query, options);
 			}
@@ -1536,15 +1565,12 @@
 				var len = 0;
 				if (basePath) {
 					path = basePath + path;
-					if (parentRoute.$parentArgsLen) {
-						len += parentRoute.$parentArgsLen;
+					if (parentRoute.parentArgsLen) {
+						len += parentRoute.parentArgsLen;
 					}
 					len += parentRoute.keys.length;
-					route.$parentArgsLen = len;
+					route.parentArgsLen = len;
 				}
-				// 避免和之后的path冲突 这里换成pattern
-				route.pattern = path;
-				delete route.path;
 				this.add(path || '/', route.callback, route, routeView);
 			}, this);	
 		},
@@ -1562,23 +1588,19 @@
 				routeView = opts;
 				opts = callback;
 			}
-			if (!routeView) routeView = this.$routeView;
+			if (!routeView) routeView = this.routeView;
 
 			var array = routeView.routes;
 			if (path.charAt(0) !== '/') {
 				throw 'path必须以/开头';
 			}
 
-			opts = opts || {};
-			opts.callback = callback || M.noop;
-			if (path.length > 2 && path.charAt(path.length - 1) === '/') {
-				path = path.slice(0, -1);
-				opts.last = '/';
-			}
-			M.Array.ensure(array, this._pathToRegExp(path, opts));
+			var route = new Route(path, callback, opts);
+			M.Array.ensure(array, route);
 
 			var children = opts.children;
 			if (children) {
+				delete opts.children; // 移除掉
 				// sub view
 				var childOptions = {};
 				var _options = routeView.options;
@@ -1589,53 +1611,13 @@
 						childOptions[k] = _options[k];
 					}
 				});
-				var subRouteView = new RouteView(opts, routeView, childOptions);
+
+				var subRouteView = new RouteView(route, routeView, childOptions);
 
 				routes = children.routes;
 				delete children.routes;
-				this._add(routes, subRouteView, path, opts);
-				delete opts.children; // 移除掉
+				this._add(routes, subRouteView, path, route);
 			}
-		},
-
-		/**
-		 * 将用户定义的路由规则转成正则表达式
-		 * 用于做匹配
-		 * @param  {String} pattern 用户定义的路由规则
-		 * @param  {Object} opts    opt配置对象
-		 * @return {Object}         opt配置后（增加了regexp）对象
-		 */
-		_pathToRegExp: function(pattern, opts) {
-			var keys = opts.keys = [],
-					sensitive = typeof opts.caseInsensitive === 'boolean' ? opts.caseInsensitive : true,
-					compiled = '^', last = 0, m, name, regexp, segment;
-
-			while ((m = placeholder.exec(pattern))) {
-				name = m[2] || m[3];
-				regexp = m[4] || (m[1] == '*' ? '.*' : 'string');
-				segment = pattern.substring(last, m.index);
-				// 类型检测
-				var type = this.$types[regexp];
-				var key = {
-					name: name
-				};
-				if (type) {
-					regexp = type.pattern;
-					key.decode = type.decode;
-				}
-				keys.push(key);
-				compiled += quoteRegExp(segment, regexp, false);
-				last = placeholder.lastIndex;
-			}
-			segment = pattern.substring(last);
-			compiled += quoteRegExp(segment);
-			if (opts.children) {
-				// 增加不带end $ 的正则
-				opts.$regexp = new RegExp(compiled, sensitive ? 'i' : undefined);
-			}
-			compiled += (opts.strict ? opts.last : '\/?') + '$';
-			opts.regexp = new RegExp(compiled, sensitive ? 'i' : undefined);
-			return opts;
 		},
 
 		/**
@@ -1644,27 +1626,10 @@
 		 * @param  {Object|Undefined} data 可选附加数据
 		 */
 		navigate: function(url, data) {
-			if(url.charAt(1) === '/')
-				url = url.slice(1); // 修正出现多扛的情况 fix http://localhost:8383/router/index.html#!//
+			if(url.charAt(1) === '/') url = url.slice(1);
 			history.push(url, data);
 		},
 
-		/* *
-		 `'/hello/'` - 匹配'/hello/'或'/hello'
-		 `'/user/:id'` - 匹配 '/user/bob' 或 '/user/1234!!!' 或 '/user/' 但不匹配 '/user' 与 '/user/bob/details'
-		 `'/user/{id}'` - 同上
-		 `'/user/{id:[^/]*}'` - 同上
-		 `'/user/{id:[0-9a-fA-F]{1,8}}'` - 要求ID匹配/[0-9a-fA-F]{1,8}/这个子正则
-		 `'/files/{path:.*}'` - Matches any URL starting with '/files/' and captures the rest of the
-		 path into the parameter 'path'.
-		 `'/files/*path'` - ditto.
-		 */
-		// Router.get("/ddd/:dddID/",callback)
-		// Router.get("/ddd/{dddID}/",callback)
-		// Router.get("/ddd/{dddID:[0-9]{4}}/",callback)
-		// Router.get("/ddd/{dddID:int}/",callback)
-		// 我们甚至可以在这里添加新的类型，Router.$type.d4 = { pattern: '[0-9]{4}', decode: Number}
-		// Router.get("/ddd/{dddID:d4}/",callback)
 		$types: {
 			date: {
 				pattern: '[0-9]{4}-(?:0[1-9]|1[0-2])-(?:0[1-9]|[1-2][0-9]|3[0-1])',
@@ -1697,40 +1662,80 @@
 	// 监听history的change
 	history.on('change', function(type, state, oldState) {
 		var first = false;
-		if (!oldState) {
-			// 第一次
-			first = true;
-		}
-
-		var url = state.url;
-		var path = history.getPath(url);
-		// 如果path为空 但是有base 说明 可以path为/
-		if (path || history.base || first) {
-			if (!path || path !== '/') path = '/' + (path || '');
-			var parsed = parseQuery(path);
-			Router.route(parsed.path, parsed.query, {
-				first: first,
-				direction: type,
-				state: state,
-				oldState: oldState
-			});
-		}
+		if (!oldState) first = true;
+		var parsed = parseUrl(state.url);
+		parsed && Router.route(parsed.path, parsed.query, {
+			first: first,
+			direction: type,
+			state: state,
+			oldState: oldState
+		});
 	});
 
+	function parseUrl(url) {
+		var path = history.getPath(url);
+		// 如果path为空 但是有base 说明 可以path为/
+		if (path || history.base) {
+			if (!path || path !== '/') path = '/' + (path || '');
+			return parseQuery(path);
+		}
+		return null;
+	}
+	function doCallback(routeIns, funcName) {
+		var f = routeIns.route[funcName];
+		return M.isFunction(f) && f.apply(routeIns, routeIns.args);
+	}
+	/**
+	 * 将用户定义的路由规则转成正则表达式
+	 * 用于做匹配
+	 * @param  {String} pattern 用户定义的路由规则
+	 * @param  {Object} opts    opt配置对象
+	 * @return {Object}         opt配置后（增加了regexp）对象
+	 */
+	function _pathToRegExp(pattern, opts) {
+		var keys = opts.keys = [],
+				sensitive = typeof opts.caseInsensitive === 'boolean' ? opts.caseInsensitive : true,
+				compiled = '^', last = 0, m, name, regexp, segment;
+
+		while ((m = placeholder.exec(pattern))) {
+			name = m[2] || m[3];
+			regexp = m[4] || (m[1] == '*' ? '.*' : 'string');
+			segment = pattern.substring(last, m.index);
+			// 类型检测
+			var type = Router.$types[regexp];
+			var key = {
+				name: name
+			};
+			if (type) {
+				regexp = type.pattern;
+				key.decode = type.decode;
+			}
+			keys.push(key);
+			compiled += quoteRegExp(segment, regexp, false);
+			last = placeholder.lastIndex;
+		}
+		segment = pattern.substring(last);
+		compiled += quoteRegExp(segment);
+		if (opts.children) {
+			// 增加不带end $ 的正则
+			opts.$regexp = new RegExp(compiled, sensitive ? 'i' : undefined);
+		}
+		compiled += (opts.strict ? opts.last : '\/?') + '$';
+		opts.regexp = new RegExp(compiled, sensitive ? 'i' : undefined);
+		return opts;
+	}
 	function quoteRegExp(string, pattern, isOptional) {
 		var result = string.replace(/[\\\[\]\^$*+?.()|{}]/g, '\\$&');
 		if (!pattern) return result;
 		var flag = isOptional ? '?' : '';
 		return result + flag + '(' + pattern + ')' + flag;
 	}
-
 	/**
 	 * 解析match到的参数
 	 * @param  {Array} match    匹配结果
 	 * @param  {Object} stateObj route state对象
 	 */
-	function _parseArgs(match, stateObj) {
-		var keys = stateObj.keys;
+	function _parseArgs(match, keys, routeIns) {
 		for (var j = 0, jn = keys.length; j < jn; j++) {
 			var key = keys[j];
 			var value = match[j] || '';
@@ -1743,22 +1748,60 @@
 					val = value;
 				}
 			}
-			match[j] = stateObj.params[key.name] = val;
+			match[j] = routeIns.params[key.name] = val;
 		}
 		
-		stateObj.args = match;
+		routeIns.args = match;
 	}
-	function matchArgs(stateObj) {
-		var match = stateObj.args;
-		if (!match) return;
-		if (stateObj.keys.length) {
-			var pl = stateObj.$parentArgsLen;
+	function matchArgs(routeIns) {
+		var match = routeIns.args;
+		if (!match) {
+			routeIns.args = [];
+			return;
+		}
+		if (routeIns.route.keys.length) {
+			var pl = routeIns.route.parentArgsLen;
 			match.splice(0, pl);
 		} else {
 			match.length = 0;
 		}
 	}
+	/**
+	 * 根据url得到path和query
+	 * @param  {String} url url
+	 * @return {Object}     path和query信息
+	 */
+	function parseQuery(url) {
+		var array = url.split('?'),
+				query = {},
+				path = array[0],
+				querystring = array[1];
 
+		if (querystring) {
+			var seg = querystring.split('&'),
+					len = seg.length, i = 0, s;
+			for (; i < len; i++) {
+				if (!seg[i]) {
+					continue;
+				}
+				s = seg[i].split('=');
+				query[decodeURIComponent(s[0])] = decodeURIComponent(s[1]);
+			}
+		}
+		return {
+			path: path,
+			query: query
+		}
+	};
+	function scrollToHash(hash) {
+		var scrollToEle;
+		if (hash) {
+			scrollToEle = M.document.getElementById(hash);
+			scrollToEle && scrollToEle.scrollIntoView();
+		}
+	}
+	function removeEle(ele) {
+		ele && ele.parentNode && ele.parentNode.removeChild(ele);
+	}
 	return Router;
-
 });

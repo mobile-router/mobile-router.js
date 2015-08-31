@@ -29,7 +29,7 @@ mobile-router.js — A lightweight single page bone for mobile web App.轻量级
 
 * 自动缓存部分画面，可配置缓存数量，默认3个。
 
-* 每个路由都有对应的`callback`和`onDestroy`配置方法，分别用于显示了对应画面后的回调以及当该画面销毁时回调。
+* 每个路由都有对应的`callback`和`onDestroy`等配置方法，分别用于显示了对应画面后的回调以及当该画面销毁时回调。
 
 * 利用`CSS animation`控制动画转场（页面切换）效果，也可设置关闭动画效果。
 
@@ -59,6 +59,9 @@ M.router.init([
 		getTemplate: function() {
 			return '/index';
 		},
+		onActive: function() { // 1.5.5+ 当路由被激活时调用，一般此时还没创建 `page-view` 元素
+			
+		},
 		callback: function() { // 页面展示出来之后
 			if (this.cached) return;
 			// 处理操作...
@@ -71,6 +74,44 @@ M.router.init([
 		},
 		onLeave: function() { // 1.5.3+ // // 页面将要隐藏的时候
 
+		}
+	},
+	{ // 支持 redirectTo 语法，可以是直接的 url 还可以是函数 (1.5.5+)
+		path: '/redirectTo/:rtPath',
+		redirectPushState: false, // 默认 true, 当激活redirectTo的时候是否启用`pushState`
+		redirectTo: function(rtPath) {
+			console.log('redirectTo', arguments, this);
+			return '/' + rtPath;
+		}
+	},
+	{ // support redirectTo , string url or function (1.5.5+)
+		// 如果当前的route配置有getTemplate的话，此时会表现的像正常的
+		// route一样依旧会创建`page-view`、会调用回调函数们、会做动画等。
+		// 当正常行为结束之后（route的callback被调用之后）会触发redirectTo的逻辑
+		path: '/contacts',
+		getTemplate: contacts.getTemplate,
+		onEnter: contacts.onEnter,
+		onLeave: contacts.onLeave,
+		callback: contacts.controller,
+		onDestroy: contacts.onDestroy,
+
+		redirectTo: '/contacts/list',
+		redirectPushState: false,
+
+		children: { // Nested routes & views! (1.5.0+)
+			viewsSelector: '.content',
+			cacheViewsNum: 1,
+			routes: [
+				{
+					// all contacts
+					path: '/list',
+					getTemplate: list.getTemplate,
+					onEnter: list.onEnter,
+					onLeave: list.onLeave,
+					callback: list.controller,
+					onDestroy: list.onDestroy
+				}
+			]
 		}
 	},
 	{
