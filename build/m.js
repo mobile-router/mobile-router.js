@@ -1564,6 +1564,7 @@
 				path = route.path;
 				var len = 0;
 				if (basePath) {
+					if (basePath === '/') basePath = '';
 					path = basePath + path;
 					if (parentRoute.parentArgsLen) {
 						len += parentRoute.parentArgsLen;
