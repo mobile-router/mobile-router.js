@@ -5,7 +5,7 @@
     <title>mobile-router.js by dolymood</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" type="text/css" href="stylesheets/normalize.css" media="screen">
-    <!--<link href='http://fonts.googleapis.com/css?family=Open+Sans:400,700' rel='stylesheet' type='text/css'>-->
+    <link href='https://fonts.googleapis.com/css?family=Open+Sans:400,700' rel='stylesheet' type='text/css'>
     <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen">
     <link rel="stylesheet" type="text/css" href="stylesheets/github-light.css" media="screen">
   </head>
@@ -33,6 +33,8 @@
 
 <p>The <a href="https://github.com/dolymood/mobile-router.js-demo">mobile-router.js-demo</a> is a simple mobile web app demo for <a href="https://github.com/dolymood/mobile-router.js">mobile-router.js</a>.</p>
 
+<p><a href="https://github.com/dolymood/mobile-router.js-sample">mobile-router.js-sample</a> - A mobile-router.js demo like <a href="http://angular-ui.github.io/ui-router/sample/">ui-router sample</a></p>
+
 <p><a href="https://github.com/dolymood/mobile-router.js/blob/master/README-zh_CN.md">中文 README</a></p>
 
 <h2>
@@ -53,39 +55,147 @@
 <h2>
 <a id="how-can-i-use-it" class="anchor" href="#how-can-i-use-it" aria-hidden="true"><span class="octicon octicon-link"></span></a>How can I use it?</h2>
 
-<div class="highlight highlight-js"><pre>M.router.init([
+<div class="highlight highlight-js"><pre>M.<span class="pl-c1">router</span>.<span class="pl-c1">init</span>([
     {
         path<span class="pl-k">:</span> <span class="pl-s"><span class="pl-pds">'</span>/<span class="pl-pds">'</span></span>, <span class="pl-c">// route path</span>
-        cacheTemplate<span class="pl-k">:</span> <span class="pl-c1">false</span>, <span class="pl-c">// cacheTemplate option for the current route</span>
-        animation<span class="pl-k">:</span> <span class="pl-c1">true</span>, <span class="pl-c">// animation option for the current route</span>
-        aniClass<span class="pl-k">:</span> <span class="pl-s"><span class="pl-pds">'</span>slideup<span class="pl-pds">'</span></span>, <span class="pl-c">// switching effects option for the current route</span>
-        <span class="pl-en">getTemplate</span>: <span class="pl-k">function</span>() { <span class="pl-c">// sync</span>
+        cacheTemplate<span class="pl-k">:</span> <span class="pl-c1">false</span>, <span class="pl-c">// cacheTemplate option for current route</span>
+        animation<span class="pl-k">:</span> <span class="pl-c1">true</span>, <span class="pl-c">// animation option for current route</span>
+        aniClass<span class="pl-k">:</span> <span class="pl-s"><span class="pl-pds">'</span>slideup<span class="pl-pds">'</span></span>, <span class="pl-c">// switching effects option for current route</span>
+        <span class="pl-en">getTemplate</span><span class="pl-k">:</span> <span class="pl-k">function</span>() { <span class="pl-c">// sync</span>
             <span class="pl-k">return</span> <span class="pl-s"><span class="pl-pds">'</span>/index template content<span class="pl-pds">'</span></span>;
         },
-        <span class="pl-en">callback</span>: <span class="pl-k">function</span>() {
-            <span class="pl-k">if</span> (<span class="pl-v">this</span>.cached) <span class="pl-k">return</span>; <span class="pl-c">// the page was cached in document.</span>
+        <span class="pl-en">onActive</span><span class="pl-k">:</span> <span class="pl-k">function</span>() { <span class="pl-c">// 1.5.5+ // called when the route is actived, even before create `page-view` element</span>
+
+        },
+        <span class="pl-en">callback</span><span class="pl-k">:</span> <span class="pl-k">function</span>() { <span class="pl-c">// called after the page has been shown</span>
+            <span class="pl-k">if</span> (<span class="pl-v">this</span>.<span class="pl-c1">cached</span>) <span class="pl-k">return</span>; <span class="pl-c">// the page was cached in document.</span>
             <span class="pl-c">// do something ...</span>
         },
-        <span class="pl-en">onDestroy</span>: <span class="pl-k">function</span>() {
+        <span class="pl-en">onDestroy</span><span class="pl-k">:</span> <span class="pl-k">function</span>() {
             <span class="pl-c">// destroy</span>
+        },
+        <span class="pl-en">onEnter</span><span class="pl-k">:</span> <span class="pl-k">function</span>(<span class="pl-smi">paramName</span>) { <span class="pl-c">// 1.5.3+ // called when the page will show</span>
+
+        },
+        <span class="pl-en">onLeave</span><span class="pl-k">:</span> <span class="pl-k">function</span>() { <span class="pl-c">// 1.5.3+ // called when the page will hide</span>
+
         }
     },
     {
-        path<span class="pl-k">:</span> <span class="pl-s"><span class="pl-pds">'</span>/c/:paramName<span class="pl-pds">'</span></span>,
-        <span class="pl-en">getTemplate</span>: <span class="pl-k">function</span>(<span class="pl-smi">cb</span>) { <span class="pl-c">// async</span>
+        path<span class="pl-k">:</span> <span class="pl-s"><span class="pl-pds">'</span>/m/:paramName<span class="pl-pds">'</span></span>,
+        <span class="pl-en">getTemplate</span><span class="pl-k">:</span> <span class="pl-k">function</span>(<span class="pl-smi">cb</span>) { <span class="pl-c">// async</span>
             <span class="pl-k">var</span> that <span class="pl-k">=</span> <span class="pl-v">this</span>;
             <span class="pl-c">// that.params - params info</span>
             <span class="pl-c">// that.query - query info</span>
             <span class="pl-c1">setTimeout</span>(<span class="pl-k">function</span>() {
-                cb(<span class="pl-s"><span class="pl-pds">'</span>/c/<span class="pl-pds">'</span></span> <span class="pl-k">+</span> that.params.paramName <span class="pl-k">+</span> <span class="pl-s"><span class="pl-pds">'</span> template content<span class="pl-pds">'</span></span>);
+                <span class="pl-c1">cb</span>(<span class="pl-s"><span class="pl-pds">'</span>/m/<span class="pl-pds">'</span></span> <span class="pl-k">+</span> that.<span class="pl-c1">params</span>.<span class="pl-c1">paramName</span> <span class="pl-k">+</span> <span class="pl-s"><span class="pl-pds">'</span> template content<span class="pl-pds">'</span></span>);
             }, <span class="pl-c1">200</span>);
         },
-        <span class="pl-en">callback</span>: <span class="pl-k">function</span>(<span class="pl-smi">paramName</span>) {
-            <span class="pl-k">if</span> (<span class="pl-v">this</span>.cached) <span class="pl-k">return</span>;
+        <span class="pl-en">callback</span><span class="pl-k">:</span> <span class="pl-k">function</span>(<span class="pl-smi">paramName</span>) {
+            <span class="pl-k">if</span> (<span class="pl-v">this</span>.<span class="pl-c1">cached</span>) <span class="pl-k">return</span>;
             <span class="pl-c">// do something ...</span>
         },
-        <span class="pl-en">onDestroy</span>: <span class="pl-k">function</span>() {
+        <span class="pl-en">onDestroy</span><span class="pl-k">:</span> <span class="pl-k">function</span>() {
             <span class="pl-c">// destroy</span>
+        }
+    },
+    { <span class="pl-c">// support redirectTo , string url or function (1.5.5+)</span>
+        path<span class="pl-k">:</span> <span class="pl-s"><span class="pl-pds">'</span>/redirectTo/:rtPath<span class="pl-pds">'</span></span>,
+        redirectPushState<span class="pl-k">:</span> <span class="pl-c1">false</span>, <span class="pl-c">// default true, enable `pushState` when redirectTo is actived</span>
+        <span class="pl-en">redirectTo</span><span class="pl-k">:</span> <span class="pl-k">function</span>(<span class="pl-smi">rtPath</span>) {
+            <span class="pl-en">console</span><span class="pl-c1">.log</span>(<span class="pl-s"><span class="pl-pds">'</span>redirectTo<span class="pl-pds">'</span></span>, arguments, <span class="pl-v">this</span>);
+            <span class="pl-k">return</span> <span class="pl-s"><span class="pl-pds">'</span>/<span class="pl-pds">'</span></span> <span class="pl-k">+</span> rtPath;
+        }
+    },
+    { <span class="pl-c">// support redirectTo , string url or function (1.5.5+)</span>
+        <span class="pl-c">// if redirectTo route have getTemplate then the `page-view` will</span>
+        <span class="pl-c">// be created, looks like a normal route. The redirectTo will be actived</span>
+        <span class="pl-c">// after the route's callback is called</span>
+        path<span class="pl-k">:</span> <span class="pl-s"><span class="pl-pds">'</span>/contacts<span class="pl-pds">'</span></span>,
+        getTemplate<span class="pl-k">:</span> contacts.<span class="pl-c1">getTemplate</span>,
+        onEnter<span class="pl-k">:</span> contacts.<span class="pl-c1">onEnter</span>,
+        onLeave<span class="pl-k">:</span> contacts.<span class="pl-c1">onLeave</span>,
+        callback<span class="pl-k">:</span> contacts.<span class="pl-c1">controller</span>,
+        onDestroy<span class="pl-k">:</span> contacts.<span class="pl-c1">onDestroy</span>,
+
+        redirectTo<span class="pl-k">:</span> <span class="pl-s"><span class="pl-pds">'</span>/contacts/list<span class="pl-pds">'</span></span>,
+        redirectPushState<span class="pl-k">:</span> <span class="pl-c1">false</span>,
+
+        children<span class="pl-k">:</span> { <span class="pl-c">// Nested routes &amp; views! (1.5.0+)</span>
+            viewsSelector<span class="pl-k">:</span> <span class="pl-s"><span class="pl-pds">'</span>.content<span class="pl-pds">'</span></span>,
+            cacheViewsNum<span class="pl-k">:</span> <span class="pl-c1">1</span>,
+            routes<span class="pl-k">:</span> [
+                {
+                    <span class="pl-c">// all contacts</span>
+                    path<span class="pl-k">:</span> <span class="pl-s"><span class="pl-pds">'</span>/list<span class="pl-pds">'</span></span>,
+                    getTemplate<span class="pl-k">:</span> list.<span class="pl-c1">getTemplate</span>,
+                    onEnter<span class="pl-k">:</span> list.<span class="pl-c1">onEnter</span>,
+                    onLeave<span class="pl-k">:</span> list.<span class="pl-c1">onLeave</span>,
+                    callback<span class="pl-k">:</span> list.<span class="pl-c1">controller</span>,
+                    onDestroy<span class="pl-k">:</span> list.<span class="pl-c1">onDestroy</span>
+                }
+            ]
+        }
+    },
+    { <span class="pl-c">// Nested routes &amp; views! (1.5.0+)</span>
+        path<span class="pl-k">:</span> <span class="pl-s"><span class="pl-pds">'</span>/b/:bid<span class="pl-pds">'</span></span>,
+        <span class="pl-en">getTemplate</span><span class="pl-k">:</span> <span class="pl-k">function</span>(<span class="pl-smi">cb</span>) {
+            <span class="pl-k">var</span> path <span class="pl-k">=</span> <span class="pl-v">this</span>.<span class="pl-c1">path</span>.<span class="pl-c1">substr</span>(<span class="pl-c1">1</span>);
+            <span class="pl-c1">setTimeout</span>(<span class="pl-k">function</span>() {
+                <span class="pl-k">var</span> lis <span class="pl-k">=</span> <span class="pl-s"><span class="pl-pds">'</span><span class="pl-pds">'</span></span>;
+                <span class="pl-k">var</span> t;
+                <span class="pl-c">// build sub view link</span>
+                <span class="pl-k">for</span> (<span class="pl-k">var</span> i <span class="pl-k">=</span> <span class="pl-c1">1</span>; i <span class="pl-k">&lt;=</span> <span class="pl-c1">4</span>; i<span class="pl-k">++</span>) {
+                    t <span class="pl-k">=</span> path <span class="pl-k">+</span> <span class="pl-s"><span class="pl-pds">'</span>/s<span class="pl-pds">'</span></span> <span class="pl-k">+</span> i;
+                    lis <span class="pl-k">+=</span> <span class="pl-s"><span class="pl-pds">'</span>&lt;li&gt;&lt;a href="<span class="pl-pds">'</span></span> <span class="pl-k">+</span> t <span class="pl-k">+</span> <span class="pl-s"><span class="pl-pds">'</span>"&gt;/<span class="pl-pds">'</span></span> <span class="pl-k">+</span> t <span class="pl-k">+</span> <span class="pl-s"><span class="pl-pds">'</span>&lt;/a&gt;&lt;/li&gt;<span class="pl-pds">'</span></span>;
+                    <span class="pl-c">// or: (looks like set `enablePushState:false`, do not change `location`)</span>
+                    <span class="pl-c">// lis += '&lt;li&gt;&lt;a href="#" data-href="' + t + '"&gt;/' + t + '&lt;/a&gt;&lt;/li&gt;';</span>
+                }
+                <span class="pl-c1">cb</span>(
+                    <span class="pl-s"><span class="pl-pds">'</span>&lt;ul class="nav"&gt;<span class="pl-pds">'</span></span> <span class="pl-k">+</span> lis <span class="pl-k">+</span> <span class="pl-s"><span class="pl-pds">'</span>&lt;/ul&gt;<span class="pl-pds">'</span></span>
+                );
+            }, <span class="pl-c1">200</span>);
+        },
+        <span class="pl-en">callback</span><span class="pl-k">:</span> <span class="pl-k">function</span>() {
+            <span class="pl-en">console</span><span class="pl-c1">.log</span>(<span class="pl-s"><span class="pl-pds">'</span>callback:/b<span class="pl-pds">'</span></span>, <span class="pl-v">this</span>, arguments);
+        },
+        <span class="pl-en">onDestroy</span><span class="pl-k">:</span> <span class="pl-k">function</span>() {
+            <span class="pl-en">console</span><span class="pl-c1">.log</span>(<span class="pl-s"><span class="pl-pds">'</span>destroy:/b<span class="pl-pds">'</span></span>, <span class="pl-v">this</span>, arguments);
+        },
+
+        children<span class="pl-k">:</span> { <span class="pl-c">// config for nested routes &amp; views! (1.5.0+)</span>
+            <span class="pl-c">/* these configs, default inherit form parent config */</span>
+            viewsSelector<span class="pl-k">:</span> <span class="pl-s"><span class="pl-pds">'</span><span class="pl-pds">'</span></span>,
+            viewClass<span class="pl-k">:</span> <span class="pl-s"><span class="pl-pds">'</span>sub-view-b<span class="pl-pds">'</span></span>,
+            maskClass<span class="pl-k">:</span> <span class="pl-s"><span class="pl-pds">'</span>mask<span class="pl-pds">'</span></span>,
+            showLoading<span class="pl-k">:</span> <span class="pl-c1">true</span>,
+            cacheViewsNum<span class="pl-k">:</span> <span class="pl-c1">3</span>,
+            cacheTemplate<span class="pl-k">:</span> <span class="pl-c1">true</span>,
+            animation<span class="pl-k">:</span> <span class="pl-c1">true</span>,
+            aniClass<span class="pl-k">:</span> <span class="pl-s"><span class="pl-pds">'</span>slide<span class="pl-pds">'</span></span>,
+
+            routes<span class="pl-k">:</span> [
+                {
+                    path<span class="pl-k">:</span> <span class="pl-s"><span class="pl-pds">'</span>/:subB<span class="pl-pds">'</span></span>, <span class="pl-c">// '/b/:bid/:subB'</span>
+                    <span class="pl-c">/* config for current sub route */</span>
+                    cacheTemplate<span class="pl-k">:</span> <span class="pl-c1">false</span>,
+                    animation<span class="pl-k">:</span> <span class="pl-c1">true</span>,
+                    aniClass<span class="pl-k">:</span> <span class="pl-s"><span class="pl-pds">'</span>slideup<span class="pl-pds">'</span></span>,
+                    <span class="pl-en">getTemplate</span><span class="pl-k">:</span> <span class="pl-k">function</span>(<span class="pl-smi">cb</span>) {
+                        <span class="pl-k">var</span> that <span class="pl-k">=</span> <span class="pl-v">this</span>;
+                        <span class="pl-c1">setTimeout</span>(<span class="pl-k">function</span>() {
+                            <span class="pl-c1">cb</span>(<span class="pl-s"><span class="pl-pds">'</span>&lt;div&gt;<span class="pl-pds">'</span></span> <span class="pl-k">+</span> that.<span class="pl-c1">path</span> <span class="pl-k">+</span> <span class="pl-s"><span class="pl-pds">'</span>&lt;p&gt;sub content&lt;/p&gt;&lt;/div&gt;<span class="pl-pds">'</span></span>);
+                        }, <span class="pl-c1">200</span>);
+                    },
+                    <span class="pl-en">callback</span><span class="pl-k">:</span> <span class="pl-k">function</span>() {
+                        <span class="pl-en">console</span><span class="pl-c1">.log</span>(<span class="pl-s"><span class="pl-pds">'</span>sub callback b<span class="pl-pds">'</span></span>, <span class="pl-v">this</span>, arguments);
+                    },
+                    <span class="pl-en">onDestroy</span><span class="pl-k">:</span> <span class="pl-k">function</span>() {
+                        <span class="pl-en">console</span><span class="pl-c1">.log</span>(<span class="pl-s"><span class="pl-pds">'</span>sub destroy b<span class="pl-pds">'</span></span>, <span class="pl-v">this</span>, arguments);
+                    }
+                }
+            ]
+
         }
     }
 ], {
@@ -113,25 +223,25 @@
 });
 
 <span class="pl-c">// Or like this</span>
-M.router.get(<span class="pl-s"><span class="pl-pds">'</span>/ddd/{dddID:int}<span class="pl-pds">'</span></span>, <span class="pl-k">function</span>(<span class="pl-smi">dddID</span>) {
+M.<span class="pl-c1">router</span>.<span class="pl-c1">add</span>(<span class="pl-s"><span class="pl-pds">'</span>/ddd/{dddID:int}<span class="pl-pds">'</span></span>, <span class="pl-k">function</span>(<span class="pl-smi">dddID</span>) {
     <span class="pl-c">// callback</span>
 }, { <span class="pl-c">// options</span>
     cacheTemplate<span class="pl-k">:</span> <span class="pl-c1">true</span>,
-    <span class="pl-en">getTemplate</span>: <span class="pl-k">function</span>() {
-        <span class="pl-k">return</span> <span class="pl-s"><span class="pl-pds">'</span>/ddd/<span class="pl-pds">'</span></span> <span class="pl-k">+</span> <span class="pl-v">this</span>.params.dddID;
+    <span class="pl-en">getTemplate</span><span class="pl-k">:</span> <span class="pl-k">function</span>() {
+        <span class="pl-k">return</span> <span class="pl-s"><span class="pl-pds">'</span>/ddd/<span class="pl-pds">'</span></span> <span class="pl-k">+</span> <span class="pl-v">this</span>.<span class="pl-c1">params</span>.<span class="pl-c1">dddID</span>;
     },
-    <span class="pl-en">onDestroy</span>: <span class="pl-k">function</span>() {
+    <span class="pl-en">onDestroy</span><span class="pl-k">:</span> <span class="pl-k">function</span>() {
         <span class="pl-c">// destroy</span>
     }
 });
 
 <span class="pl-c">/* global route change events */</span>
 <span class="pl-c">/* `routeChangeStart` event, trigged before a route change. */</span>
-M.router.on(<span class="pl-s"><span class="pl-pds">'</span>routeChangeStart<span class="pl-pds">'</span></span>, <span class="pl-k">function</span>(<span class="pl-smi">currentRouteState</span>) {
+M.<span class="pl-c1">router</span>.<span class="pl-c1">on</span>(<span class="pl-s"><span class="pl-pds">'</span>routeChangeStart<span class="pl-pds">'</span></span>, <span class="pl-k">function</span>(<span class="pl-smi">currentRouteState</span>) {
 
 });
 <span class="pl-c">/*`routeChangeEnd` event, trigged after a route changed and the page has been shown.*/</span>
-M.router.on(<span class="pl-s"><span class="pl-pds">'</span>routeChangeEnd<span class="pl-pds">'</span></span>, <span class="pl-k">function</span>(<span class="pl-smi">currentRouteState</span>) {
+M.<span class="pl-c1">router</span>.<span class="pl-c1">on</span>(<span class="pl-s"><span class="pl-pds">'</span>routeChangeEnd<span class="pl-pds">'</span></span>, <span class="pl-k">function</span>(<span class="pl-smi">currentRouteState</span>) {
 
 });
 
@@ -146,13 +256,30 @@ M.<span class="pl-c1">history</span>.<span class="pl-c1">start</span>({
 <a id="advantages" class="anchor" href="#advantages" aria-hidden="true"><span class="octicon octicon-link"></span></a>Advantages?</h2>
 
 <ul>
-<li><p>Lightweight, Easy to use. Based on <a href="https://developer.mozilla.org/en-US/docs/Web/Guide/API/DOM/Manipulating_the_browser_history">history</a>, <a href="https://developer.mozilla.org/en-US/docs/WindowEventHandlers.onpopstate">window.onpopstate</a>.</p></li>
+<li><p>Lightweight, Easy. Based on <a href="https://developer.mozilla.org/en-US/docs/Web/Guide/API/DOM/Manipulating_the_browser_history">history</a>, <a href="https://developer.mozilla.org/en-US/docs/WindowEventHandlers.onpopstate">window.onpopstate</a>.</p></li>
+<li><p>Nested routes &amp; views (1.5.0+).</p></li>
 <li><p>No Dependencies. You can use it with <code>jquery</code>, <code>zepto</code>, <code>iscroll</code> or others.</p></li>
 <li><p>Cache templates automatically.</p></li>
 <li><p>Good for <code>SEO</code>. You can render pages on server.</p></li>
 <li><p>Cache pages automatically. Default cache pages number is <code>3</code>.</p></li>
 <li><p>Switching pages use <code>CSS animation</code>.</p></li>
 <li><p>Enable <code>pushstate</code> or not.</p></li>
+</ul>
+
+<h2>
+<a id="about-examples" class="anchor" href="#about-examples" aria-hidden="true"><span class="octicon octicon-link"></span></a>About examples/</h2>
+
+<ul>
+<li><p><code>index.html</code>: basic usage, <code>getTemplate</code> config, and <code>data-rel=back</code> attribute config on link element for reverse animation direction.</p></li>
+<li><p><code>index1.html</code>: <code>data-href</code> attribute config on link for disable <code>pushState</code>, and disable <code>animation</code> of one route.</p></li>
+<li><p><code>index2.html</code>: disable <code>animation</code>.</p></li>
+<li><p><code>index3.html</code>: disable <code>cacheTemplate</code>.</p></li>
+<li><p><code>index4.html</code>: set global <code>aniClass</code>.</p></li>
+<li><p><code>index5.html</code>: set <code>aniClass</code> in two ways.</p></li>
+<li><p><code>index6.html</code>: set <code>cacheTemplate</code> of one route.</p></li>
+<li><p><code>index7.html</code>: set <code>M.history</code> config <code>enablePushState=false</code> for disable <code>pushState</code>.</p></li>
+<li><p><code>index8.html</code>: nested routes and views.</p></li>
+<li><p><code>requirejs/</code>: use <a href="http://requirejs.org/">require.js</a></p></li>
 </ul>
 
 <h2>
@@ -178,4 +305,3 @@ M.<span class="pl-c1">history</span>.<span class="pl-c1">start</span>({
   
   </body>
 </html>
-
