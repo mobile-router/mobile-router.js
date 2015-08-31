@@ -28,7 +28,7 @@
 		showLoading: true, /*显示loading*/
 		cacheViewsNum: 3 /*缓存view数*/
 	};
-	var defOptionsKeys = M.Object.keys(defOptions);
+	var defOptionsKeys = Object.keys(defOptions);
 
 	// 蒙层元素
 	var maskEle = M.document.createElement('div');
@@ -586,14 +586,13 @@
 
 		// parse opts
 		M.each([
-			'cacheTemplate', 'viewClass', 'reloadOnSearch', 'redirectTo', 'redirectPushState',
+			'cacheTemplate', 'viewClass', 'redirectTo', 'redirectPushState',
 			'callback', 'getTemplate', 'onActive', 'onDestroy', 'onEnter', 'onLeave',
 			'regexp', '$regexp', 'keys', 'parentArgsLen'
 		], function(k) {
 			this[k] = opts[k];
 			delete opts[k];
 		}, this);
-		if (M.isUndefined(this.reloadOnSearch)) this.reloadOnSearch = true;
 
 		var redirectTo = this.redirectTo;
 		if (M.isString(redirectTo)) {
@@ -639,13 +638,7 @@
 		},
 
 		checkEqual: function(ins, path, query) {
-			if (ins.path === path) {
-				if (this.reloadOnSearch) {
-					return M.Object.equal(ins.query, query);
-				}
-				return true;
-			}
-			return false;
+			return ins.path === path;
 		},
 
 		getIns: function(index) {

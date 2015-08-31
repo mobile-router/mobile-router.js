@@ -388,17 +388,6 @@
 					return target.push(item);
 				}
 			},
-			/*移除数组中指定位置的元素，返回布尔表示成功与否*/
-			removeAt: function(target, index) {
-				return !!target.splice(index, 1).length;
-			},
-			/*移除数组中第一个匹配传参的那个元素，返回布尔表示成功与否*/
-			remove: function(target, item) {
-				var index = target.indexOf(item);
-				if (~index)
-					return M.Array.removeAt(target, index);
-				return false;
-			},
 			/*得到在target数组中具有相同key的值的位置*/
 			indexOfByKey: function(target, item, key) {
 				var val = item[key];
@@ -408,30 +397,6 @@
 					}
 				}
 				return -1;
-			}
-		},
-
-		Object: {
-			keys: Object.keys || function(object) {
-				var ret = [];
-				for (var k in object) {
-					if (object.hasOwnProperty(k)) {
-						ret.push(k);
-					}
-				}
-				return ret;
-			},
-			equal: function(obj1, obj2) {
-				var ret = true;
-				M.each(obj1, function(v, k) {
-					if (Object(v) === v) {
-						ret = M.Object.equal(v, obj2[k]);
-					} else {
-						ret = obj2[k] === v;
-					}
-					return ret;
-				});
-				return ret;
 			}
 		}
 	});
