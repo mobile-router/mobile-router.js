@@ -474,9 +474,9 @@
 				if (!_pageViewEle) {
 					endCall && endCall();
 					checkPageViews();
-					var curIndex = M.Array.indexOfByKey(that.pagesCache, that.pageViewState, 'path');
-					curIndex >= 0 && that.pagesCache.splice(curIndex, 1);
-					that.pageViewState.route.destroyIns(that.pageViewState);
+					// var curIndex = M.Array.indexOfByKey(that.pagesCache, that.pageViewState, 'path');
+					// curIndex >= 0 && that.pagesCache.splice(curIndex, 1);
+					// that.pageViewState.route.destroyIns(that.pageViewState);
 					that.pageViewState = null;
 					that.defaultTemplate && M.innerHTML(that.viewsContainer, that.defaultTemplate);
 					return;
