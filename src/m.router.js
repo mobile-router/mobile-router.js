@@ -89,7 +89,7 @@
 					var p = that, pr, element;
 					while (p && (pr = p.$parentRoute)) {
 						element = pr.ele();
-						if (!that.viewsContainer || !element || !pr.actived()) {
+						if (!that.viewsContainer || !element || !pr.actived() || routeIns.path.match(pr.$regexp)[0]!=pr.path) {
 							// 初始化 但是默认匹配到的是 子路由 需要初始化 父路由
 							that.$parent.route(routeIns.path, routeIns.query, M.extend({matchIns: routeIns}, options), path, function() {
 								delete that.$parent.pageViewState.options.matchIns;
