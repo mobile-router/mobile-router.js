@@ -586,7 +586,7 @@
 
 		// parse opts
 		M.each([
-			'cacheTemplate', 'viewClass', 'redirectTo', 'redirectPushState',
+			'cacheTemplate', 'animation', 'aniClass', 'redirectTo', 'redirectPushState',
 			'callback', 'getTemplate', 'onActive', 'onDestroy', 'onEnter', 'onLeave',
 			'regexp', '$regexp', 'keys', 'parentArgsLen'
 		], function(k) {
