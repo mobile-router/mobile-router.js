@@ -888,17 +888,26 @@
 			}
 		},
 
-		_route: function(routeIns, cb) {
-			var route = routeIns.route;
-			var that = this;
-			// 缓存模板
-			var cacheTemplate = this.getOption(route, routeIns.options.state, 'cacheTemplate');
+		_getDefaultEle: function(routeIns) {
 			var id = M.getUIDByKey(routeIns.path);
 			var initView;
 			if (routeIns.options.first &&
 					(initView = this.viewsContainer.getElementsByClassName(defViewClass)[0]) &&
 					(!initView.id || initView.id === id)
 				) {
+				return initView;
+			}
+			return null;
+		},
+
+		_route: function(routeIns, cb) {
+			var route = routeIns.route;
+			var that = this;
+			// 缓存模板
+			var cacheTemplate = this.getOption(route, routeIns.options.state, 'cacheTemplate');
+			var id = M.getUIDByKey(routeIns.path);
+			var initView = this._getDefaultEle(routeIns);
+			if (initView) {
 				this.templateCache[routeIns.path] = initView.innerHTML;
 				cacheTemplate = true;
 			}
@@ -1009,7 +1018,7 @@
 			var id = M.getUIDByKey(routeIns.path);
 			if (first) {
 				options.first = first;
-				nowView = this.viewsContainer.getElementsByClassName(defViewClass)[0];
+				nowView = this._getDefaultEle(routeIns);
 				removeEle(this.maskEle);
 				if (this.viewsContainer && this.$parentRoute && this.viewsContainer !== this.$parentRoute.ele()) {
 					this.defaultTemplate = this.viewsContainer.innerHTML;
