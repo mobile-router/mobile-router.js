@@ -88,7 +88,7 @@
 					routeIns = el.ins(_path, query || {}, args, options);
 					var p = that, pr, activeIns;
 					while (p && (pr = p.$parentRoute)) {
-						activeIns = pr.active();
+						activeIns = pr.getActive();
 						if (!that.viewsContainer || !activeIns || routeIns.path.match(pr.$regexp)[0]!=activeIns.path) {
 							// 初始化 但是默认匹配到的是 子路由 需要初始化 父路由
 							that.$parent.route(routeIns.path, routeIns.query, M.extend({matchIns: routeIns}, options), path, function() {
