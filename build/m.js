@@ -1302,7 +1302,7 @@
 		destroyRouteIns: function(routeIns) {
 			var route = routeIns.route;
 			var routeView = route.routeView;
-			if (routeView && route !== this.pageViewState.route || !routeView.pageViewState) {
+			if (route !== this.pageViewState.route || routeView && !routeView.pageViewState) {
 				// destroy child
 				var ins = routeView.pagesCache.shift();
 				while (ins) {
