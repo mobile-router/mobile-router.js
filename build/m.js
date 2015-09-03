@@ -712,8 +712,8 @@
 				// 已存在
 				i = urlCache.indexOf(url);
 			} else {
-				urlCache.push(url);
-				i = urlCache.length - 1;
+				i = this.index + 1;
+				urlCache.splice(i, 0, url);
 			}
 			stateCache[url] = M.extend(true, stateCache[url], state);
 			this.clearCache(i);
