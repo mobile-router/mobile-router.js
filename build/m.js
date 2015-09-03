@@ -1309,7 +1309,7 @@
 				}
 				// routeView.templateCache = {};
 				routeView.pageViewState = null;
-				if (route.ele() != this.pageViewState.element) {
+				if (!nowRoute || route.ele() != this.pageViewState.element) {
 					routeView.setViewsContainer(null);
 				}
 				removeEle(routeView.maskEle);
