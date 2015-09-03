@@ -1230,9 +1230,6 @@
 				if (!_pageViewEle) {
 					endCall && endCall();
 					checkPageViews();
-					// var curIndex = M.Array.indexOfByKey(that.pagesCache, that.pageViewState, 'path');
-					// curIndex >= 0 && that.pagesCache.splice(curIndex, 1);
-					// that.pageViewState.route.destroyIns(that.pageViewState);
 					that.pageViewState = null;
 					that.defaultTemplate && M.innerHTML(that.viewsContainer, that.defaultTemplate);
 					return;
@@ -1302,7 +1299,8 @@
 		destroyRouteIns: function(routeIns) {
 			var route = routeIns.route;
 			var routeView = route.routeView;
-			if (routeView && (route !== this.pageViewState.route || !routeView.pageViewState)) {
+			var nowRoute = this.pageViewState && this.pageViewState.route;
+			if (routeView && (!routeView.pageViewState || route !== nowRoute)) {
 				// destroy child
 				var ins = routeView.pagesCache.shift();
 				while (ins) {
