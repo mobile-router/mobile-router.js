@@ -423,7 +423,9 @@
 				// reflow
 				ele.offsetWidth = ele.offsetWidth;
 				doCallback(pageViewState, 'onLeave');
-				pageViewState.route.setActive(-1);
+				if (pageViewState.route.getActive() === pageViewState) {
+					pageViewState.route.setActive(-1);
+				}
 			}
 			
 			if (_pageViewEle) {
@@ -546,7 +548,7 @@
 		destroyRouteIns: function(routeIns) {
 			var route = routeIns.route;
 			var routeView = route.routeView;
-			if (routeView) {
+			if (routeView && route !== this.pageViewState.route) {
 				// destroy child
 				var ins = routeView.pagesCache.shift();
 				while (ins) {
@@ -555,9 +557,7 @@
 				}
 				// routeView.templateCache = {};
 				routeView.pageViewState = null;
-				if (routeView.$parentRoute.ele() != this.pageViewState.element) {
-					routeView.setViewsContainer();
-				}
+				routeView.setViewsContainer(null);
 				removeEle(routeView.maskEle);
 				routeView.maskEle = null;
 			}
@@ -740,7 +740,7 @@
 		},
 
 		isParentOf: function(path) {
-			var reg = this.$regexp;
+			var reg = this.route.$regexp;
 			if (reg) {
 				var ret = path.match(reg);
 				if (ret && ret[0] === this.path) {

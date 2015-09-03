@@ -842,7 +842,7 @@
 					var p = that, pr, activeIns;
 					while (p && (pr = p.$parentRoute)) {
 						activeIns = pr.getActive();
-						if (!that.viewsContainer || !activeIns || routeIns.path.match(pr.$regexp)[0]!=activeIns.path) {
+						if (!that.viewsContainer || !activeIns || !activeIns.isParentOf(routeIns.path)) {
 							// 初始化 但是默认匹配到的是 子路由 需要初始化 父路由
 							that.$parent.route(routeIns.path, routeIns.query, M.extend({matchIns: routeIns}, options), path, function() {
 								delete that.$parent.pageViewState.options.matchIns;
@@ -1176,7 +1176,9 @@
 				// reflow
 				ele.offsetWidth = ele.offsetWidth;
 				doCallback(pageViewState, 'onLeave');
-				pageViewState.route.setActive(-1);
+				if (pageViewState.route.getActive() === pageViewState) {
+					pageViewState.route.setActive(-1);
+				}
 			}
 			
 			if (_pageViewEle) {
@@ -1299,7 +1301,7 @@
 		destroyRouteIns: function(routeIns) {
 			var route = routeIns.route;
 			var routeView = route.routeView;
-			if (routeView) {
+			if (routeView && route !== this.pageViewState.route) {
 				// destroy child
 				var ins = routeView.pagesCache.shift();
 				while (ins) {
@@ -1308,9 +1310,7 @@
 				}
 				// routeView.templateCache = {};
 				routeView.pageViewState = null;
-				if (routeView.$parentRoute.ele() != this.pageViewState.element) {
-					routeView.setViewsContainer();
-				}
+				routeView.setViewsContainer(null);
 				removeEle(routeView.maskEle);
 				routeView.maskEle = null;
 			}
@@ -1488,6 +1488,17 @@
 			if (parsed && this.route.checkEqual(this, parsed.path, parsed.query)) {
 				update && (this.query = parsed.query);
 				return true;
+			}
+			return false;
+		},
+
+		isParentOf: function(path) {
+			var reg = this.route.$regexp;
+			if (reg) {
+				var ret = path.match(reg);
+				if (ret && ret[0] === this.path) {
+					return true;
+				}
 			}
 			return false;
 		},
