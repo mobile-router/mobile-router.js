@@ -726,11 +726,12 @@
 		 */
 		clearCache: function(index) {
 			if (M.isUndefined(index)) index = -1;
-			var clearUrls = urlCache.slice(index + 1);
+			var num = index + 5;
+			var clearUrls = urlCache.slice(num);
 			clearUrls.forEach(function(url) {
 				delete stateCache[url];
 			});
-			urlCache.length = index + 1;
+			if (urlCache.length > num) urlCache.length = num;
 		},
 
 		/**
