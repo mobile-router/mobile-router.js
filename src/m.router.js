@@ -79,6 +79,7 @@
 		route: function(path, query, options, realPath, cb) {
 			var routes = this.routes;
 			if (!options) options = {};
+			options.first = options.first || !this.pageViewState;
 			var ret = false;
 			var that = this;
 			for (var i = 0, el, _path, routeIns, keys; el = routes[i]; i++) {
@@ -260,11 +261,9 @@
 
 			var that = this;
 			var options = routeIns.options; // 带过来的options
-			var first = options.first || !this.pageViewState;
 			var nowView;
 			var id = M.getUIDByKey(routeIns.path);
-			if (first) {
-				options.first = first;
+			if (options.first) {
 				nowView = this._getDefaultEle(routeIns);
 				removeEle(this.maskEle);
 				if (this.viewsContainer && this.$parentRoute && this.viewsContainer !== this.$parentRoute.ele()) {
