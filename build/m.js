@@ -839,6 +839,7 @@
 				var args = path.match(realPath && el.$regexp || el.regexp);
 				if (args) {
 					_path = args.shift();
+					options.first = options.first || !this.pageViewState;
 					routeIns = el.ins(_path, query || {}, args, options);
 					var p = that, pr, activeIns;
 					while (p && (pr = p.$parentRoute)) {
@@ -909,8 +910,21 @@
 			var id = M.getUIDByKey(routeIns.path);
 			var initView = this._getDefaultEle(routeIns);
 			if (initView) {
+				var pageViews = initView.getElementsByClassName(defViewClass);
+				var childViews = [];
+				M.each(pageViews, function(pv) {
+					if (pv.parentNode == initView) {
+						removeEle(pv);
+						childViews.push(pv);
+					}
+				});
 				this.templateCache[routeIns.path] = initView.innerHTML;
 				cacheTemplate = true;
+				M.each(childViews, function(cv) {
+					initView.appendChild(cv);
+				});
+				pageViews = null;
+				childViews = null;
 			}
 			if (M.isString(cacheTemplate)) cacheTemplate = cacheTemplate === 'true';
 			// 这里加上 得到模板
@@ -1014,11 +1028,9 @@
 
 			var that = this;
 			var options = routeIns.options; // 带过来的options
-			var first = options.first || !this.pageViewState;
 			var nowView;
 			var id = M.getUIDByKey(routeIns.path);
-			if (first) {
-				options.first = first;
+			if (options.first) {
 				nowView = this._getDefaultEle(routeIns);
 				removeEle(this.maskEle);
 				if (this.viewsContainer && this.$parentRoute && this.viewsContainer !== this.$parentRoute.ele()) {
