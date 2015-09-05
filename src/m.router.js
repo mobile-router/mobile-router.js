@@ -79,13 +79,13 @@
 		route: function(path, query, options, realPath, cb) {
 			var routes = this.routes;
 			if (!options) options = {};
-			options.first = options.first || !this.pageViewState;
 			var ret = false;
 			var that = this;
 			for (var i = 0, el, _path, routeIns, keys; el = routes[i]; i++) {
 				var args = path.match(realPath && el.$regexp || el.regexp);
 				if (args) {
 					_path = args.shift();
+					options.first = options.first || !this.pageViewState;
 					routeIns = el.ins(_path, query || {}, args, options);
 					var p = that, pr, activeIns;
 					while (p && (pr = p.$parentRoute)) {
