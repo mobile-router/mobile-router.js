@@ -169,6 +169,8 @@
 				M.each(childViews, function(cv) {
 					initView.appendChild(cv);
 				});
+				pageViews = null;
+				childViews = null;
 			}
 			if (M.isString(cacheTemplate)) cacheTemplate = cacheTemplate === 'true';
 			// 这里加上 得到模板
