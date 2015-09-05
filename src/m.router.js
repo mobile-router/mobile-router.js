@@ -156,8 +156,19 @@
 			var id = M.getUIDByKey(routeIns.path);
 			var initView = this._getDefaultEle(routeIns);
 			if (initView) {
+				var pageViews = initView.getElementsByClassName(defViewClass);
+				var childViews = [];
+				M.each(pageViews, function(pv) {
+					if (pv.parentNode == initView) {
+						removeEle(pv);
+						childViews.push(pv);
+					}
+				});
 				this.templateCache[routeIns.path] = initView.innerHTML;
 				cacheTemplate = true;
+				M.each(childViews, function(cv) {
+					initView.appendChild(cv);
+				});
 			}
 			if (M.isString(cacheTemplate)) cacheTemplate = cacheTemplate === 'true';
 			// 这里加上 得到模板
