@@ -29,7 +29,7 @@ or use git clone
 
 	git clone https://github.com/dolymood/mobile-router.js.git
 
-## How can I use it?
+## How can i use it?
 
 ```js
 M.router.init([
