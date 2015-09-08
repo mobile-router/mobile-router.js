@@ -176,6 +176,7 @@ M.router.init([
 		}
 	}
 ], {
+	/** Global configs  */
 	/*cache tempaltes or not*/
 	cacheTemplate: true,
 
@@ -247,6 +248,12 @@ M.history.start({
 * Switching pages use `CSS animation`.
 
 * Enable `pushstate` or not.
+
+## About some configs
+
+The priority of get `animation`, `aniClass` or `cacheTemplate` config's value is:
+
+	`data-xxx` -> route config -> global config
 
 ## About examples/
 
