@@ -319,14 +319,15 @@
 			}
 			var routeView = route.routeView;
 			if (routeView) {
+				var routeViewPS = routeView.pageViewState;
 				if (shown) {
-					if (routeView.pageViewState) {
-						routeView._transView(null, routeView.pageViewState, options, childDone);
+					if (routeViewPS && routeViewPS !== routeIns.options.matchIns) {
+						routeView._transView(null, routeViewPS, options, childDone);
 					} else {
 						childDone();
 					}
 					return;
-				} else if (routeView.pageViewState) {
+				} else if (routeViewPS) {
 					var matchIns = routeIns.options.matchIns;
 					var finded = false, matchRoute;
 					if (matchIns) {
@@ -347,7 +348,7 @@
 					}
 					
 					if (!finded) {
-						routeView._transView(null, routeView.pageViewState, options);
+						routeView._transView(null, routeViewPS, options);
 					}
 				}
 			}
