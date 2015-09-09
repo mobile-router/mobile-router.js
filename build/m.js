@@ -839,7 +839,6 @@
 				var args = path.match(realPath && el.$regexp || el.regexp);
 				if (args) {
 					_path = args.shift();
-					options.first = options.first || !this.pageViewState;
 					routeIns = el.ins(_path, query || {}, args, options);
 					var p = that, pr, activeIns;
 					while (p && (pr = p.$parentRoute)) {
@@ -927,6 +926,8 @@
 				childViews = null;
 			}
 			if (M.isString(cacheTemplate)) cacheTemplate = cacheTemplate === 'true';
+			// update options.first 
+			routeIns.options.first = routeIns.options.first || !this.pageViewState;
 			// 这里加上 得到模板
 			var args = routeIns.args;
 			if (!(cacheTemplate && this.templateCache[routeIns.path]) && route.getTemplate) {
