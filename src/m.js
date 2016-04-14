@@ -273,7 +273,7 @@
 
 	// , 空格替换正则
 	var rword = /[^, ]+/g;
-
+	var rsvg = /^\[object SVG\w*Element\]$/;
 	var ClassListMethods = {
 		_toString: function() {
 			var node = this.node;
