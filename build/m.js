@@ -273,7 +273,7 @@
 
 	// , 空格替换正则
 	var rword = /[^, ]+/g;
-
+	var rsvg = /^\[object SVG\w*Element\]$/;
 	var ClassListMethods = {
 		_toString: function() {
 			var node = this.node;
@@ -816,6 +816,7 @@
 		/*当前pageview状态对象*/
 		this.pageViewState = null;
 		this.viewsContainer = null;
+		this.routeIns = null;
 		this.options = options;
 		this.pagesCache = [];
 		this.templateCache = {};
@@ -901,7 +902,15 @@
 			return null;
 		},
 
+		_checkInsActive: function(routeIns) {
+			return this.routeIns === routeIns
+		},
+
 		_route: function(routeIns, cb) {
+			if (this.routeIns && this.routeIns.endCall) {
+				this.routeIns.endCall();
+			}
+			this.routeIns = routeIns;
 			var route = routeIns.route;
 			var that = this;
 			// 缓存模板
@@ -926,7 +935,7 @@
 				childViews = null;
 			}
 			if (M.isString(cacheTemplate)) cacheTemplate = cacheTemplate === 'true';
-			// update options.first 
+			// update options.first
 			routeIns.options.first = routeIns.options.first || !this.pageViewState;
 			// 这里加上 得到模板
 			var args = routeIns.args;
@@ -1024,6 +1033,9 @@
 		 */
 		getTemplateCb: function(routeIns, template, cb) {
 			this.hideLoading();
+			if (!this._checkInsActive(routeIns)) {
+				return;
+			}
 			routeIns._oldTemplate = this.templateCache[routeIns.path];
 			this.templateCache[routeIns.path] = template || '';
 
@@ -1100,7 +1112,7 @@
 							}
 						}
 					}
-					
+
 					if (!finded) {
 						routeView._transView(null, routeViewPS, options);
 					}
@@ -1108,14 +1120,16 @@
 			}
 			this._transView(_pageViewEle, routeIns, options, endCall);
 			function endCall(element) {
-				routeIns.setEle(element);
+				if (!routeIns.endCall) {
+					return;
+				}
+				routeIns.endCall = null;
 				var index = M.Array.indexOfByKey(that.pagesCache, routeIns,  'path');
 				if (~index) {
 					// 移掉当前的
 					that.pagesCache.splice(index, 1);
 				}
 				that.pagesCache.push(routeIns);
-				that.pageViewState = routeIns;
 				setHtml();
 				_endCall();
 			}
@@ -1157,15 +1171,20 @@
 			var ele = pageViewState && pageViewState.element;
 			var that = this;
 
+			this.pageViewState = routeIns;
+
 			if (_pageViewEle) {
 				// 重置class
 				M.removeClass(_pageViewEle, allClass);
 				M.addClass(_pageViewEle, defViewClass + ' ' + this.options.viewClass);
 			}
-			
+
+			routeIns.endCall = endCall;
+			routeIns.setEle(_pageViewEle);
+
 			var animation = this._shouldAni(this.options.animation, routeIns, options);
 			animation = animation && !!endCall && !routeIns.redirectTo && !routeIns.options.state.data.redirectToSync;
-			
+
 			if (animation) {
 				var aniEnterClass = aniClass;
 				var aniLeaveClass = aniClass;
@@ -1195,7 +1214,7 @@
 					pageViewState.route.setActive(-1);
 				}
 			}
-			
+
 			if (_pageViewEle) {
 				// 移去 initPosClass
 				M.removeClass(_pageViewEle, initPosClass);
@@ -1204,7 +1223,7 @@
 				_pageViewEle.offsetWidth = _pageViewEle.offsetWidth;
 				doCallback(routeIns, 'onEnter');
 			}
-			
+
 			if (!routeIns.cached && options.state.hash) {
 				// 滚动到指定hash元素位置
 				scrollToHash(options.state.hash);
@@ -1601,7 +1620,7 @@
 					route.parentArgsLen = len;
 				}
 				this.add(path || '/', route.callback, route, routeView);
-			}, this);	
+			}, this);
 		},
 
 		/**
@@ -1779,7 +1798,7 @@
 			}
 			match[j] = routeIns.params[key.name] = val;
 		}
-		
+
 		routeIns.args = match;
 	}
 	function matchArgs(routeIns) {
