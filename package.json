@@ -4,7 +4,7 @@
   "description": "A lightweight single page bone for mobile web App.",
   "main": "m.router.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "gulp"
   },
   "repository": "dolymood/mobile-router.js",
   "keywords": [
@@ -20,7 +20,7 @@
   "author": "dolymood",
   "license": [{
     "type": "MIT",
-    "url": "https://github.com/dolymood/mobile-router.js/blob/master/LICENSE" 
+    "url": "https://github.com/dolymood/mobile-router.js/blob/master/LICENSE"
   }],
   "homepage": "https://github.com/dolymood/mobile-router.js",
   "bugs": {
