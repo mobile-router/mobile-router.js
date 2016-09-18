@@ -15,6 +15,8 @@ mobile-router.js — A lightweight single page bone for mobile web App.轻量级
 
 [mobile-router.js-sample](https://github.com/dolymood/mobile-router.js-sample) - A mobile-router.js demo like [ui-router sample](http://angular-ui.github.io/ui-router/sample/)
 
+gziphou仅有8.8k
+
 ### 优势：
 
 * 使用简单、方便、轻量，基于 [history](https://developer.mozilla.org/en-US/docs/Web/Guide/API/DOM/Manipulating_the_browser_history)、[window.onpopstate](https://developer.mozilla.org/en-US/docs/WindowEventHandlers.onpopstate)。
