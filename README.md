@@ -17,6 +17,8 @@ The [mobile-router.js-demo](https://github.com/dolymood/mobile-router.js-demo) i
 
 [中文 README](https://github.com/dolymood/mobile-router.js/blob/master/README-zh_CN.md)
 
+Only 8.8k when gzipped
+
 ## How can i install it?
 
 Download a latest build from <https://github.com/dolymood/mobile-router.js/releases> it contains development and minified production files in build/ folder.
