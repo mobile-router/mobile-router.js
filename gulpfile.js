@@ -3,8 +3,9 @@ var concat = require('gulp-concat');
 var uglify = require('gulp-uglify');
 var minifyCss = require('gulp-minify-css');
 var del = require('del');
+var webpack = require('webpack-stream')
 
-var jsPaths = ['src/m.js', 'src/m.history.js', 'src/m.router.js'];
+var jsPaths = 'src/router.js';
 var destJs = 'build/m.js';
 var cssPath = 'src/m.css';
 var cssAniPath = 'src/m.animate.css';
@@ -15,7 +16,13 @@ gulp.task('clean', function(cb) {
 
 gulp.task('scripts', ['clean'], function() {
   return gulp.src(jsPaths)
-    .pipe(concat('m.js'))
+    .pipe(webpack({
+      output: {
+        filename: 'm.js',
+        library: 'M',
+        libraryTarget: 'umd'
+      }
+    }))
     .pipe(gulp.dest('build/'));
 });
 
