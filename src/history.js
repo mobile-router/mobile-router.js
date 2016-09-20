@@ -27,53 +27,90 @@ var android = parseInt((/android (\d+)/.exec(agent.toLowerCase()) || [])[1], 10)
 if (isNaN(android)) android = undefined;
 var boxee = /Boxee/i.test(agent);
 
-var support = !!(history && history.pushState && history.replaceState && !(android < 4) && !boxee);
+var supportPushState = !!(history && history.pushState && history.replaceState && !(android < 4) && !boxee);
+var supportHashChange = !!('onhashchange' in win);
+
+var MODE_MAP = {
+		hashbang: 1,
+		history: 2,
+		abstract: 3
+};
+
+var hashbangPrefix = '#!';
 
 var History = {
 
+	mode: MODE_MAP.hashbang,
+
+	supportPushState: supportPushState,
+	supportHashChange: supportHashChange,
 	/*是否支持*/
-	support: support,
+	support: supportPushState || supportHashChange,
 
 	/*是否已启动*/
-	_startd: false,
+	startd: false,
 
 	/*在urlCache中位置*/
 	index: -1,
+	preIndex: -1,
 
 	/*base path*/
 	base: defBase,
+
+	checkMode: function() {
+		if (this.options.hashbang) {
+			this.mode = MODE_MAP.hashbang;
+		} else if (this.options.history) {
+			this.mode = MODE_MAP.history;
+		} else if (this.options.abstract) {
+			this.mode = MODE_MAP.abstract;
+		} else {
+			// 默认 hashbang
+			this.mode = MODE_MAP.hashbang;
+		}
+		if (this.mode === MODE_MAP.history && !this.supportPushState) {
+			// history 模式 但是不支持 pushstate
+			this.mode = MODE_MAP.hashbang;
+		}
+		if (!this.support) {
+			// 都不支持
+			this.mode = MODE_MAP.abstract;
+		}
+	},
 
 	/**
 	 * 启动
 	 * @param  {Object} options 配置参数
 	 */
 	start: function(options) {
-		if (this._startd) return;
+		if (this.startd) return;
 		if (!options) options = {};
 		var base = options.base;
 		if (M.isDefined(base) && M.isString(base)) {
 			this.base = parseBasePath(base);
 		}
-		this._startd = true;
+		this.startd = true;
 
-		this.options = M.extend({
-			enablePushState: true
-		}, options);
+		this.options = M.extend({}, options);
 
-		if (support) {
-			// 监听改变
-			this.options.enablePushState &&
-			win.addEventListener('popstate', this.onChange);
+		// 检查设置的模式
+		this.checkMode();
 
-			// 阻止 a
-			M.document.addEventListener('click', this.onDocClick);
+		// 根据模式做处理
+		switch (this.mode) {
+			case MODE_MAP.history:
+				win.addEventListener('popstate', this.onChange);
+				break;
+			case MODE_MAP.hashbang:
+				win.addEventListener('hashchange', this.onChange);
+				break;
+			case MODE_MAP.abstract:
+				break;
 		}
+		M.document.addEventListener('click', this.onDocClick);
 
 		// 需要初始化一次当前的state
-		this.onChange({
-			type: 'popstate',
-			state: History.getUrlState(M.location.href)
-		});
+		this.onChange();
 		this.trigger('inited');
 	},
 
@@ -81,12 +118,18 @@ var History = {
 	 * 停止监听
 	 */
 	stop: function() {
-		if (support) {
-			this.options.enablePushState &&
-			win.removeEventListener('popstate', this.onChange);
-			M.document.removeEventListener('click', this.onDocClick);
+		switch (this.mode) {
+			case MODE_MAP.history:
+				win.removeEventListener('popstate', this.onChange);
+				break;
+			case MODE_MAP.hashbang:
+				win.removeEventListener('hashchange', this.onChange);
+				break;
+			case MODE_MAP.abstract:
+				break;
 		}
-		this._startd = false;
+		M.document.removeEventListener('click', this.onDocClick);
+		this.startd = false;
 		this.index = -1;
 		stateCache = {};
 		urlCache = [];
@@ -94,16 +137,23 @@ var History = {
 
 	/**
 	 * 去掉url中base之后的path
-	 * @param  {String} url url
-	 * @return {String}     去掉base之后的URL
+	 * @param  {String}  url      url
+	 * @param  {Boolean} noSearch 不加search信息
+	 * @return {String}           去掉base之后的URL
 	 */
-	getPath: function(url) {
+	getPath: function(url, noSearch) {
 		var urlDetail = M.parseUrl(url);
-		var path = decodeURIComponent(urlDetail.pathname + urlDetail.search);
+		var path = decodeURIComponent(urlDetail.pathname + (noSearch ? '' : urlDetail.search));
 		// 去掉最后/
 		var root = this.base.slice(0, -1);
 		if (!path.indexOf(root)) path = path.slice(root.length);
-		return path.slice(1);
+		path = path.slice(1);
+		if (path || History.base) {
+			if (!path || path !== '/') {
+				path = '/' + (path || '');
+			}
+		}
+		return path;
 	},
 
 	/**
@@ -120,9 +170,13 @@ var History = {
 		var hrefTarget = M.getHrefAndTarget(targetEle);
 		targetEle = hrefTarget.target;
 		var href = hrefTarget.href;
+		if (!href || !targetEle) {
+			return;
+		}
 		// 存在 href 且和当前是同源
-		// 且不带 target 且不是以 javascript: 开头
-		if (History.checkUrl(href) && !targetEle.target) {
+		// 且不带 target download rel!=external 且不是以 javascript: 开头
+		var noSpes = !targetEle.target && !targetEle.hasAttribute('download') && targetEle.getAttribute('rel') !== 'external';
+		if (History.checkUrl(href) && noSpes) {
 			var datasetObj =  M.getDatesetObj(targetEle);
 			var state = History.createStateObject(href, datasetObj);
 			e.preventDefault();
@@ -141,8 +195,8 @@ var History = {
 		if (!urlOrigin) {
 			urlOrigin = M.parseUrl(url).origin;
 		}
-		var rjavascript = /^javascript:/;
-		return url && locationOrigin === urlOrigin && !rjavascript.test(url);
+		var rext = /^(javascript:)|(mailto:)|(tel:)/;
+		return url && locationOrigin === urlOrigin && !rext.test(url);
 	},
 
 	/**
@@ -155,6 +209,10 @@ var History = {
 		this.pushState(state);
 	},
 
+	currentHref: function() {
+		return M.location.href.replace(hashbangPrefix + '/', '');
+	},
+
 	/**
 	 * 添加新的state
 	 * @param  {Object}  state   state数据对象
@@ -163,11 +221,15 @@ var History = {
 	pushState: function(state, checked) {
 		if (!checked && !this.checkUrl(state.url, state.origin)) return;
 		if (state.url === History.getCurrentState().url) return;
-		// 如果是允许pushstate 且其dataset中不包含href的话才会改变history
+		// 如果是允许改变history 且其dataset中不包含href的话才会改变history
 		// 规则就是：
 		// data-href="newUrl"会被认为是在当前页中切换，也就是局部禁用pushstate
-		if (this.options.enablePushState && M.isUndefined(state.data.href) && state.url !== M.location.href) {
-			history[state.replace == 'true' ? 'replaceState' : 'pushState'](state, state.title, state.url);
+		if (this.mode !== MODE_MAP.abstract && M.isUndefined(state.data.href) && state.url !== History.currentHref()) {
+			if (this.mode === MODE_MAP.hashbang) {
+					M.location.hash = hashbangPrefix + state.rpath;
+			} else {
+					history[state.replace ? 'replaceState' : 'pushState'](state, state.title, state.url);
+			}
 		}
 		this.onChange({
 			state: state
@@ -176,10 +238,9 @@ var History = {
 
 	/**
 	 * history改变回调
-	 * @param  {Event|Object|Undefined} e 事件对象或者包含state对象
 	 */
 	onChange: function(e) {
-		var state = e && e.state || History.getUrlState(M.location.href);
+		var state = e && e.state || History.getUrlState(History.currentHref());
 		var oldState = History.getCurrentState();
 
 		// 如果新的url和旧的url只是hash不同，那么应该走scrollIntoView
@@ -213,6 +274,9 @@ var History = {
 			type = 'forward';
 		}
 		M.document.title = state.title;
+		if (newIndex !== History.index) {
+				History.preIndex = History.index;
+		}
 		History.index = newIndex;
 		// 触发改变事件
 		History.trigger(type, state, oldState);
@@ -244,8 +308,13 @@ var History = {
 	 * @return {Object|Null} 当前的state
 	 */
 	getPrevState: function() {
-		var url = urlCache[this.index - 1];
-		if (!url) return null;
+		var url = urlCache[History.preIndex];
+		if (!url) {
+			url = urlCache[this.index - 1];
+			if (!url) {
+					return null;
+			}
+		}
 		return stateCache[url] || null;
 	},
 
@@ -253,26 +322,28 @@ var History = {
 	 * 创建包装state对象
 	 * @param  {String} url   url
 	 * @param  {object} data  附带数据
-	 * @param  {String} title title
 	 * @return {Object}       包装的state对象
 	 */
-	createStateObject: function(url, data, title) {
+	createStateObject: function(url, data) {
 		if (url) {
 			if (url.charAt(0) === '/') {
 				url = url.slice(1);
 				url = this.base + url;
 			}
 		} else {
-			url = M.location.href;
+			url = History.currentHref();
 		}
 		var parsedUrl = M.parseUrl(url);
 		return {
 			data: data || (data = {}),
-			title: title || data.title || M.document.title,
+			title: data.title || M.document.title,
 			rurl: parsedUrl.rurl,
 			url: parsedUrl.url,
+			path: parsedUrl.pathname,
+			rpath: History.getPath(url),
 			origin: parsedUrl.origin,
-			hash: parsedUrl.hash
+			hash: parsedUrl.hash,
+			replace: M.isString(data.replace) ? data.replace === 'true' : !!data.replace
 		};
 	},
 
@@ -287,15 +358,16 @@ var History = {
 
 	/**
 	 * 存储state
-	 * @param  {Object} state 包装state对象
-	 * @return {Number}       在urlCache中位置
+	 * @param  {Object}            state 包装state对象
+	 * @return {Number}            在urlCache中位置
 	 */
 	storeState: function(state) {
 		var i = -1;
 		var url = state.rurl;
+		var toIndex = urlCache.indexOf(url);
 		if (this.hasUrl(url)) {
-			// 已存在
-			i = urlCache.indexOf(url);
+			// 之前有
+			i = toIndex;
 		} else {
 			i = this.index + 1;
 			urlCache.splice(i, 0, url);
@@ -311,7 +383,8 @@ var History = {
 	 */
 	clearCache: function(index) {
 		if (M.isUndefined(index)) index = -1;
-		var num = index + 5;
+		// 最多保留50条记录
+		var num = index + 50;
 		var clearUrls = urlCache.slice(num);
 		clearUrls.forEach(function(url) {
 			delete stateCache[url];
@@ -343,8 +416,7 @@ module.exports = M;
 function parseUrl(url) {
 	var path = History.getPath(url);
 	// 如果path为空 但是有base 说明 可以path为/
-	if (path || History.base) {
-		if (!path || path !== '/') path = '/' + (path || '');
+	if (path) {
 		return M.parseQuery(path);
 	}
 	return null;
