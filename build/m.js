@@ -101,7 +101,7 @@ return /******/ (function(modules) { // webpackBootstrap
 			}
 			var rvOptions = {};
 			M.extend(rvOptions, defOptions, options || {});
-			this.routeView = new RouteView(null, null, rvOptions);
+			this.routeView = new RouteView(null, rvOptions);
 			this._add(routes);
 		},
 
@@ -183,7 +183,7 @@ return /******/ (function(modules) { // webpackBootstrap
 					}
 				});
 
-				var subRouteView = new RouteView(route, routeView, childOptions);
+				var subRouteView = new RouteView(route, childOptions);
 
 				routes = children.routes;
 				delete children.routes;
@@ -1464,14 +1464,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	var defViewClass = 'page-view';
 	var ENTERCLASS = 'in';
 
-	function RouteView(parentRoute, parentRouterView, options) {
+	function RouteView(parentRoute, options) {
 		if (parentRoute) {
 			parentRoute.setRouteView(this);
-			this.$parentRoute = parentRoute;
-		} else {
-			this.$parentRoute = null;
 		}
-		if (parentRouterView) this.$parent = parentRouterView;
 
 		this.routes = [];
 		this.maskEle = null;

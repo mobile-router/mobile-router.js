@@ -21,14 +21,10 @@ var aniEndName = (function() {
 var defViewClass = 'page-view';
 var ENTERCLASS = 'in';
 
-function RouteView(parentRoute, parentRouterView, options) {
+function RouteView(parentRoute, options) {
 	if (parentRoute) {
 		parentRoute.setRouteView(this);
-		this.$parentRoute = parentRoute;
-	} else {
-		this.$parentRoute = null;
 	}
-	if (parentRouterView) this.$parent = parentRouterView;
 
 	this.routes = [];
 	this.maskEle = null;

@@ -45,7 +45,7 @@ var Router = {
 		}
 		var rvOptions = {};
 		M.extend(rvOptions, defOptions, options || {});
-		this.routeView = new RouteView(null, null, rvOptions);
+		this.routeView = new RouteView(null, rvOptions);
 		this._add(routes);
 	},
 
@@ -127,7 +127,7 @@ var Router = {
 				}
 			});
 
-			var subRouteView = new RouteView(route, routeView, childOptions);
+			var subRouteView = new RouteView(route, childOptions);
 
 			routes = children.routes;
 			delete children.routes;
