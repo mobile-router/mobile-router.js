@@ -99,9 +99,9 @@ return /******/ (function(modules) { // webpackBootstrap
 				this.error(options.error);
 				delete options.error;
 			}
-			var childOptions = {};
-			M.extend(childOptions, defOptions, options || {});
-			this.routeView = new RouteView(null, null, childOptions);
+			var rvOptions = {};
+			M.extend(rvOptions, defOptions, options || {});
+			this.routeView = new RouteView(null, null, rvOptions);
 			this._add(routes);
 		},
 
@@ -136,9 +136,9 @@ return /******/ (function(modules) { // webpackBootstrap
 				if (basePath) {
 					if (basePath === '/') basePath = '';
 					path = basePath + path;
-					if (parentRoute.parentArgsLen) {
-						len += parentRoute.parentArgsLen;
-					}
+					// if (parentRoute.parentArgsLen) {
+					// 	len += parentRoute.parentArgsLen;
+					// }
 					len += parentRoute.keys.length;
 					route.parentArgsLen = len;
 				}
@@ -239,6 +239,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	// 得到basepath
 	var parseBasePath = function(path) {
+		path = path.replace(/[^\/]+$/, '');
 		return ('/' + path + '/').replace(/^\/+|\/+$/g, '/');
 	};
 	// 默认base path
@@ -249,7 +250,9 @@ return /******/ (function(modules) { // webpackBootstrap
 		defBase = '/';
 	}
 
-	var locationOrigin = M.parseLocation().origin;
+	var locationObj = M.parseLocation();
+	var locationPath = locationObj.pathname;
+	var locationOrigin = locationObj.origin;
 
 	var history = win.history;
 	var agent = (win.navigator || {}).userAgent;
@@ -326,6 +329,8 @@ return /******/ (function(modules) { // webpackBootstrap
 
 			// 检查设置的模式
 			this.checkMode();
+
+			this.pathExt = History.getPath(locationPath).slice(1);
 
 			// 根据模式做处理
 			switch (this.mode) {
@@ -441,7 +446,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		},
 
 		currentHref: function() {
-			return M.location.href.replace(hashbangPrefix + '/', '');
+			return M.location.href.replace(History.pathExt, '').replace(hashbangPrefix + '/', '');
 		},
 
 		/**
@@ -1054,6 +1059,9 @@ return /******/ (function(modules) { // webpackBootstrap
 		isPlainObject: isPlainObject,
 		parseLocation: parseLocation,
 		getUIDByKey: getUIDByKey,
+		getShortId: function(uid) {
+			return uid && uid.split('-')[2]
+		},
 		hasClass: function(el, cls) {
 			return el.nodeType === 1 && ClassList(el).contains(cls);
 		},
@@ -1100,27 +1108,27 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ function(module, exports) {
 
 	module.exports = {
-	  date: {
-	    pattern: '[0-9]{4}-(?:0[1-9]|1[0-2])-(?:0[1-9]|[1-2][0-9]|3[0-1])',
-	    decode: function(val) {
-	      return new Date(val.replace(/\-/g, '/'));
-	    }
-	  },
-	  string: {
-	    pattern: '[^\\/]*'
-	  },
-	  bool: {
-	    pattern: '0|1',
-	    decode: function(val) {
-	      return parseInt(val, 10) === 0 ? false : true;
-	    }
-	  },
-	  int: {
-	    pattern: '\\d+',
-	    decode: function(val) {
-	      return parseInt(val, 10);
-	    }
-	  }
+		date: {
+			pattern: '[0-9]{4}-(?:0[1-9]|1[0-2])-(?:0[1-9]|[1-2][0-9]|3[0-1])',
+			decode: function(val) {
+				return new Date(val.replace(/\-/g, '/'));
+			}
+		},
+		string: {
+			pattern: '[^\\/]*'
+		},
+		bool: {
+			pattern: '0|1',
+			decode: function(val) {
+				return parseInt(val, 10) === 0 ? false : true;
+			}
+		},
+		int: {
+			pattern: '\\d+',
+			decode: function(val) {
+				return parseInt(val, 10);
+			}
+		}
 	};
 
 
@@ -1324,6 +1332,11 @@ return /******/ (function(modules) { // webpackBootstrap
 		this._oldTemplate = '';
 		this.destroyed = false;
 		this.setArgs(args);
+		var id = M.getUIDByKey(this.path);
+		if (this.options && this.options.parentUID) {
+			id = this.options.parentUID + '-' + M.getShortId(id);
+		}
+		this.id = id;
 	}
 
 	M.extend(RouteIns.prototype, {
@@ -1465,7 +1478,6 @@ return /******/ (function(modules) { // webpackBootstrap
 		/*当前pageview状态对象*/
 		this.pageViewState = null;
 		this.viewsContainer = null;
-		this.routeIns = null;
 		this.options = options;
 		this.pagesCache = [];
 		this.templateCache = {};
@@ -1474,43 +1486,39 @@ return /******/ (function(modules) { // webpackBootstrap
 		if (this.options.cacheViewsNum < 1) {
 			this.options.cacheViewsNum = 1;
 		}
+		if (!this.options.maskClass) {
+			this.options.maskClass = 'mask';
+		}
+		this.options.maskClass = this.options.maskClass.replace(/^\s+|\s+$/g, '').replace(/\s+/g, ' ');
 		if (!parentRoute) {
+			// 根 RouteView
 			this.setViewsContainer(M.document.body);
 		}
 	}
 	M.extend(RouteView.prototype, {
 
-		route: function(path, query, options, realPath, cb) {
+		route: function(path, query, options) {
 			var routes = this.routes;
 			if (!options) options = {};
 			var ret = false;
 			var that = this;
 			for (var i = 0, el, _path, routeIns, keys; el = routes[i]; i++) {
-				var args = path.match(realPath && el.$regexp || el.regexp);
+				var args = path.match(el.$regexp || el.regexp);
 				if (args) {
 					_path = args.shift();
 					routeIns = el.ins(_path, query || {}, args, options);
-					var p = that, pr, activeIns;
-					while (p && (pr = p.$parentRoute)) {
-						activeIns = pr.getActive();
-						if (!that.viewsContainer || !activeIns || !activeIns.isParentOf(routeIns.path)) {
-							// 初始化 但是默认匹配到的是 子路由 需要初始化 父路由
-							that.$parent.route(routeIns.path, routeIns.query, M.extend({matchIns: routeIns}, options), path, function() {
-								delete that.$parent.pageViewState.options.matchIns;
-								if (that.pageViewState && that.pageViewState.path === path) return;
-								that._waiting = true;
-								that._route(routeIns, cb);
-							});
-							return true;
-						}
-						p = p.$parent;
-					}
-					that._route(routeIns, cb);
+					that._route(routeIns, function () {
+						M.nextTick(function() {
+							if (el.routeView && !routeIns.destroyed) {
+								// 子 RouteView
+								if (!el.routeView.route(path, routeIns.query, M.extend({parentUID: routeIns.id}, options))) {
+									// 子的并没有匹配到 例如说从 子路由 恢复到 父路由的时候
+									el.routeView.leave(options);
+								}
+							}
+						});
+					});
 					ret = true;
-				} else if (!realPath) {
-					if (el.routeView) {
-						ret = el.routeView.route(path, query, options);
-					}
 				}
 				if (ret) {
 					break;
@@ -1519,12 +1527,12 @@ return /******/ (function(modules) { // webpackBootstrap
 			return ret;
 		},
 
-		_redirectTo: function(routeIns, async) {
+		_redirectTo: function(routeIns, isAsync) {
 			var route = routeIns.route;
 			var rtUrl;
 			if (route.redirectTo && (rtUrl = doCallback(routeIns, 'redirectTo'))) {
 				if (!routeIns.equalTo(rtUrl, true)) {
-					if (async) M.nextTick(reT);
+					if (isAsync) M.nextTick(reT);
 					else reT();
 					return true;
 				}
@@ -1533,76 +1541,91 @@ return /******/ (function(modules) { // webpackBootstrap
 			function reT() {
 				!routeIns.element && route.destroyIns(routeIns);
 				var data = {};
-				if (!async) data.redirectToSync = true;
+				if (!isAsync) data.redirectToSync = true;
 				if (!route.redirectPushState) data.href = rtUrl;
 				M.router.navigate(rtUrl, data);
 			}
 		},
 
 		_getDefaultEle: function(routeIns) {
-			var id = M.getUIDByKey(routeIns.path);
 			var initView;
-			if (routeIns.options.first &&
+			if (!this.pageViewState &&
 					(initView = this.viewsContainer.getElementsByClassName(defViewClass)[0]) &&
-					(!initView.id || initView.id === id)
+					(!initView.id || initView.id === routeIns.id)
 				) {
 				return initView;
 			}
 			return null;
 		},
 
-		_checkInsActive: function(routeIns) {
-			return this.routeIns === routeIns
+		_setDefTemplateCache: function(routeIns) {
+			var initView = routeIns.element;
+			var cacheTemplate = false;
+			if (initView && routeIns.options.first) {
+				// 初次进入 获得内容 得到默认模板 后端渲染
+				if (routeIns.route.routeView) {
+					// 有 routeView 证明有子view
+					var pageViews = initView.getElementsByClassName(defViewClass);
+					// 获取初始的 innerHTML 作为缓存了的模板内容
+					var childViews = [];
+					M.each(pageViews, function(pv) {
+						if (pv.parentNode == initView) {
+							M.removeEle(pv);
+							childViews.push(pv);
+						}
+					});
+					// 移除了子元素的 html 后的内容
+					this.templateCache[routeIns.path] = initView.innerHTML;
+					// 依次附加回去
+					M.each(childViews, function(cv) {
+						initView.appendChild(cv);
+					});
+					pageViews = null;
+					childViews = null;
+				} else {
+					this.templateCache[routeIns.path] = initView.innerHTML;
+				}
+				cacheTemplate = !!this.templateCache[routeIns.path];
+			}
+			return cacheTemplate;
 		},
 
 		_route: function(routeIns, cb) {
-			if (this.routeIns && this.routeIns.endCall) {
-				this.routeIns.endCall();
+			if (routeIns === this.pageViewState) {
+				return cb();
 			}
-			this.routeIns = routeIns;
 			var route = routeIns.route;
 			var that = this;
 			// 缓存模板
 			var cacheTemplate = this.getOption(route, routeIns.options.state, 'cacheTemplate');
-			var id = M.getUIDByKey(routeIns.path);
 			var initView = this._getDefaultEle(routeIns);
-			if (initView) {
-				var pageViews = initView.getElementsByClassName(defViewClass);
-				var childViews = [];
-				M.each(pageViews, function(pv) {
-					if (pv.parentNode == initView) {
-						M.removeEle(pv);
-						childViews.push(pv);
-					}
-				});
-				this.templateCache[routeIns.path] = initView.innerHTML;
+			routeIns.setEle(initView);
+			if (this._setDefTemplateCache(routeIns)) {
 				cacheTemplate = true;
-				M.each(childViews, function(cv) {
-					initView.appendChild(cv);
-				});
-				pageViews = null;
-				childViews = null;
 			}
 			if (M.isString(cacheTemplate)) cacheTemplate = cacheTemplate === 'true';
-			// update options.first
-			routeIns.options.first = routeIns.options.first || !this.pageViewState;
 			// 这里加上 得到模板
 			var args = routeIns.args;
 			if (!(cacheTemplate && this.templateCache[routeIns.path]) && route.getTemplate) {
 				doCallback(routeIns, 'onActive');
 				M.router.trigger('routeChangeStart', routeIns, args);
+				// 给当前的活动ins的元素加上 on-out
+				// 为了隐藏 loading
+				if (this.pageViewState && this.pageViewState.element) {
+					M.addClass(this.pageViewState.element, 'on-out');
+				}
 				this.showLoading();
 				if (route.getTemplate.length > 0) {
-					this._waiting = false;
 					// 有参数 则需要回调 主要场景是异步得到模板
 					route.getTemplate.call(routeIns, getTemplateCb);
 				} else {
 					getTemplateCb(route.getTemplate.call(routeIns));
 				}
 			} else {
-				if (!route.getTemplate && !cb && this._redirectTo(routeIns, true)) {
-					return;
-				}
+				// 跳转
+				// if (!route.getTemplate && this._redirectTo(routeIns, true)) {
+				// 	return;
+				// }
 				doCallback(routeIns, 'onActive');
 				M.router.trigger('routeChangeStart', routeIns, args);
 				getTemplateCb(this.templateCache[routeIns.path]);
@@ -1628,7 +1651,8 @@ return /******/ (function(modules) { // webpackBootstrap
 		 */
 		showLoading: function(force) {
 			if (!this.options.showLoading && !force) return;
-			if (!this.maskEle) {
+			var maskEle = this.viewsContainer.querySelector(this.options.maskClass.replace(/^|\s/g, '.'));
+			if (!maskEle) {
 				this.initMaskEle();
 			}
 			this.maskEle.style.visibility = 'visible';
@@ -1665,7 +1689,7 @@ return /******/ (function(modules) { // webpackBootstrap
 			if (historyState) {
 				val = historyState.data[key];
 			}
-			if (M.isUndefined(val)) {
+			if (routeState && M.isUndefined(val)) {
 				val = routeState[key];
 				if (M.isUndefined(val)) {
 					val = this.options[key];
@@ -1682,29 +1706,21 @@ return /******/ (function(modules) { // webpackBootstrap
 		 */
 		getTemplateCb: function(routeIns, template, cb) {
 			this.hideLoading();
-			if (!this._checkInsActive(routeIns)) {
-				return;
-			}
 			routeIns._oldTemplate = this.templateCache[routeIns.path];
 			this.templateCache[routeIns.path] = template || '';
 
 			var that = this;
 			var options = routeIns.options; // 带过来的options
+			var pageViewState = this.pageViewState;
 			var nowView;
-			var id = M.getUIDByKey(routeIns.path);
-			if (options.first) {
-				nowView = this._getDefaultEle(routeIns);
-				M.removeEle(this.maskEle);
-				if (this.viewsContainer && this.$parentRoute && this.viewsContainer !== this.$parentRoute.ele()) {
-					this.defaultTemplate = this.viewsContainer.innerHTML;
-					if (!nowView) {
-						M.innerHTML(this.viewsContainer, '');
-						this.maskEle = null;
-					}
-				}
-				this.maskEle && this.viewsContainer.appendChild(this.maskEle);
+			var id = routeIns.id;
+			if (!this.pageViewState) {
+				nowView = routeIns.element;
 			}
-
+			if (!this.viewsContainer || routeIns.destroyed) {
+				// 还没来得及 就已经被 destroy 了
+				return;
+			}
 			var _pageViewEle = M.document.getElementById(id);
 			if (!_pageViewEle) {
 				// 创建新的元素
@@ -1716,11 +1732,13 @@ return /******/ (function(modules) { // webpackBootstrap
 			} else {
 				routeIns.cached = true;
 			}
-
+			routeIns.setEle(_pageViewEle);
 			var shown = M.hasClass(_pageViewEle, ENTERCLASS);
+			this._initEle(routeIns);
 			var route = routeIns.route;
 			var redirected = false;
 			if (shown && routeIns.element === _pageViewEle && that._redirectTo(routeIns, true)) {
+				// redirect
 				redirected = true;
 				childDone();
 				return;
@@ -1732,42 +1750,10 @@ return /******/ (function(modules) { // webpackBootstrap
 				}
 				routeIns.cached = false;
 			}
-			var routeView = route.routeView;
-			if (routeView) {
-				var routeViewPS = routeView.pageViewState;
-				if (shown) {
-					if (routeViewPS && routeViewPS !== routeIns.options.matchIns) {
-						routeView._transView(null, routeViewPS, options, childDone);
-					} else {
-						childDone();
-					}
-					return;
-				} else if (routeViewPS) {
-					var matchIns = routeIns.options.matchIns;
-					var finded = false, matchRoute;
-					if (matchIns) {
-						matchRoute = matchIns.route;
-						var rv = routeView, childRV;
-						while (!finded && rv && rv.pageViewState) {
-							childRV = rv.pageViewState.route.routeView;
-							if (matchRoute == rv.pageViewState.route) {
-								finded = true;
-								if (matchIns.path !== rv.pageViewState.path) {
-									rv._transView(null, rv.pageViewState, options);
-								}
-								childRV && childRV.pageViewState && childRV._transView(null, childRV.pageViewState, options);
-							} else {
-								rv = childRV;
-							}
-						}
-					}
 
-					if (!finded) {
-						routeView._transView(null, routeViewPS, options);
-					}
-				}
-			}
-			this._transView(_pageViewEle, routeIns, options, endCall);
+			var routeView = route.routeView;
+			endCall();
+			this._transView(routeIns, options, _endCall);
 			function endCall() {
 				var index = M.Array.indexOfByKey(that.pagesCache, routeIns,  'path');
 				if (~index) {
@@ -1776,39 +1762,62 @@ return /******/ (function(modules) { // webpackBootstrap
 				}
 				that.pagesCache.push(routeIns);
 				setHtml();
-				_endCall();
+				// _endCall();
 			}
 			function childDone() {
-				if (routeIns.endCall === M.noop || routeIns.destroyed) {
-					routeIns.endCall = M.noop;
-					return;
-				}
 				setHtml();
 				doCallback(routeIns, 'onEnter');
 				_endCall();
-				routeIns.endCall = M.noop;
 			}
 			function setHtml() {
 				if (shown && routeView) {
-					if (routeView.defaultTemplate || !routeIns.cached) {
+					if (!routeIns.cached) {
 						M.innerHTML(_pageViewEle, template);
 						routeIns.cached = false;
 					}
 				}
-			}
-			function _endCall() {
 				if (routeView) {
 					routeView.setViewsContainer(routeIns.element);
 				}
+				cb && cb();
+			}
+			function _endCall() {
+				if (pageViewState && pageViewState.element) {
+					M.removeClass(pageViewState.element, 'on-out');
+				}
 				doCallback(routeIns, 'callback');
 				M.router.trigger('routeChangeEnd', routeIns, routeIns.args);
-				cb && cb();
-				delete that._waiting;
-				!redirected && !cb && that._redirectTo(routeIns);
+				// !redirected && !cb && that._redirectTo(routeIns);
 			}
 		},
 
-		_transView: function(_pageViewEle, routeIns, options, endCall) {
+		_initEle: function(routeIns) {
+			var ele = routeIns.element;
+
+			var enterClass = ENTERCLASS;
+			var leaveClass = 'out';
+			var initPosClass = leaveClass;
+			var reverseClass = 'reverse';
+			var aniClass = 'ani';
+			var allClass = enterClass + ' ' + reverseClass;
+
+				// 重置class
+			M.removeClass(ele, allClass);
+			M.addClass(ele, defViewClass + ' ' + leaveClass + ' ' + this.options.viewClass);
+		},
+
+		leave: function(options) {
+			if (this.pageViewState && !this.pageViewState.destroyed) {
+				// 存在当前活动的
+				var childRouteView = this.pageViewState.route.routeView;
+				if (childRouteView) {
+					childRouteView.leave(options);
+				}
+				this._transView(this.pageViewState, options);
+			}
+		},
+
+		_transView: function(routeIns, options, endCall) {
 			var enterClass = ENTERCLASS;
 			var leaveClass = 'out';
 			var initPosClass = leaveClass;
@@ -1817,36 +1826,26 @@ return /******/ (function(modules) { // webpackBootstrap
 			var allClass = enterClass + ' ' + reverseClass;
 			var overhidden = 'overhidden';
 
+			var _pageViewEle = routeIns.element;
 			var pageViewState = this.pageViewState;
 			var ele = pageViewState && pageViewState.element;
 			var that = this;
 
-			this.pageViewState = routeIns;
-
-			if (_pageViewEle) {
-				// 重置class
-				M.removeClass(_pageViewEle, allClass);
-				M.addClass(_pageViewEle, defViewClass + ' ' + this.options.viewClass);
+			if (pageViewState === routeIns) {
+				// 两者相等 认为是leave
+				_pageViewEle = null;
 			}
 
-			routeIns.endCall = function() {
-				if (routeIns.endCall === M.noop || routeIns.destroyed) {
-					routeIns.endCall = M.noop;
-					return;
-				}
-				endCall && endCall.apply(this, arguments);
-				routeIns.endCall = M.noop;
-			};
-			routeIns.setEle(_pageViewEle);
+			this.pageViewState = routeIns;
 
 			var animation = this._shouldAni(this.options.animation, routeIns, options);
-			animation = animation && !!endCall && !routeIns.redirectTo && !routeIns.options.state.data.redirectToSync;
+			animation = animation && !routeIns.redirectTo && !routeIns.options.state.data.redirectToSync;
 
 			if (animation) {
 				var aniEnterClass = aniClass;
 				var aniLeaveClass = aniClass;
 				aniEnterClass += ' ' + this.getOption(routeIns.route, options.state, 'aniClass');
-				if (!options.first) {
+				if (!options.first && pageViewState) {
 					aniLeaveClass += ' ' + this.getOption(pageViewState.route, options.oldState, 'aniClass');
 				}
 
@@ -1893,7 +1892,7 @@ return /******/ (function(modules) { // webpackBootstrap
 				// 没有动画
 				entered = true;
 				leaved = true;
-				routeIns.endCall();
+				endCall && endCall();
 				cb();
 				return;
 			}
@@ -1901,7 +1900,7 @@ return /******/ (function(modules) { // webpackBootstrap
 				entered = true;
 				cancelEvt(_pageViewEle, aniEnd);
 				M.removeClass(_pageViewEle, aniEnterClass);
-				routeIns.endCall();
+				endCall && endCall();
 				checkPageViews();
 			});
 			ele && ele.addEventListener(aniEndName, function aniEnd2() {
@@ -1911,56 +1910,52 @@ return /******/ (function(modules) { // webpackBootstrap
 				cb();
 			});
 			function cancelEvt(ele, func) {
-				setTimeout(function() {
-					func && ele.removeEventListener(aniEndName, func);
-				});
+				func && ele.removeEventListener(aniEndName, func);
 			}
 			function cb() {
 				if (!_pageViewEle) {
-					routeIns.endCall();
+					// leave 模式
+					endCall && endCall();
 					checkPageViews();
 					that.pageViewState = null;
-					that.defaultTemplate && M.innerHTML(that.viewsContainer, that.defaultTemplate);
 					return;
+				}
+				// 如果有子的 routeView 那么需要 leave
+				if (pageViewState && pageViewState.route && pageViewState.route.getActive() !== that.pageViewState) {
+					pageViewState.route.routeView && pageViewState.route.routeView.leave(options)
 				}
 				checkPageViews();
 			}
 			function checkPageViews() {
-				setTimeout(function() {
-					M.removeClass(that.viewsContainer, overhidden);
-				}, 100);
-				// 还有没完成的
 				if (!entered || !leaved) return;
-				that.checkPageViews();
+				M.removeClass(that.viewsContainer, overhidden);
+				that.checkPageViews(routeIns);
 			}
 		},
 
 		_shouldAni: function(animation, routeIns, options) {
 			var curAnimation = this.getOption(routeIns.route, options.state, 'animation');
 			var prevAnimation = animation;
-			if (!options.first) {
+			if (!options.first && this.pageViewState) {
 				prevAnimation = this.getOption(this.pageViewState.route, options.oldState, 'animation');
 			}
 
 			curAnimation = curAnimation == true || curAnimation == 'true' ? true : false;
 			prevAnimation = prevAnimation == true || prevAnimation == 'true' ? true : false;
 
-			animation = curAnimation && prevAnimation && (!this._waiting || !options.first);
-			if (options.first) {
-				animation = animation && !!this.$parentRoute;
-			}
+			animation = curAnimation && prevAnimation && !options.first;
 			return animation;
 		},
 
 		/**
 		 * 检查views 移除不需要缓存在页面上的元素
 		 */
-		checkPageViews: function() {
+		checkPageViews: function(routeIns) {
 			var cacheViewsNum = this.options.cacheViewsNum;
 			var pagesCache = this.pagesCache;
 			if (pagesCache.length <= cacheViewsNum) return;
 			// 当前的index
-			var curIndex = M.Array.indexOfByKey(pagesCache, this.pageViewState, 'path');
+			var curIndex = M.Array.indexOfByKey(pagesCache, routeIns, 'path');
 			var newLeft = 0;
 			var newRight = 0;
 			newLeft = curIndex - Math.floor((cacheViewsNum - 1) / 2);
@@ -2025,6 +2020,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	module.exports = RouteView;
 
 	function doCallback(routeIns, funcName) {
+		if (routeIns.destroyed) {
+			return;
+		}
 		var f = routeIns.route[funcName];
 		return M.isFunction(f) && f.apply(routeIns, routeIns.args);
 	}

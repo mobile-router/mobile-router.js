@@ -15,6 +15,11 @@ function RouteIns(route, path, query, args, options) {
 	this._oldTemplate = '';
 	this.destroyed = false;
 	this.setArgs(args);
+	var id = M.getUIDByKey(this.path);
+	if (this.options && this.options.parentUID) {
+		id = this.options.parentUID + '-' + M.getShortId(id);
+	}
+	this.id = id;
 }
 
 M.extend(RouteIns.prototype, {

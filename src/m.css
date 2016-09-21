@@ -15,7 +15,7 @@ body {position:relative;-webkit-user-select:none;user-select:none;-ms-touch-acti
 .page-view.in {-webkit-transform:translate3d(0, 0, 0);transform:translateX(0);}
 /*前进方向离开*/
 .page-view.out {-webkit-transform:translate3d(-100%, 0, 0);transform:translateX(-100%)}
-
+.page-view.on-out .mask {visibility: hidden!important;}
 
 /*前进方向进入*/
 .slide.in {-webkit-animation-name:slideinfromright;animation-name:slideinfromright;}

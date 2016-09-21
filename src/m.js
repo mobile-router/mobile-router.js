@@ -394,6 +394,9 @@ M.extend({
 	isPlainObject: isPlainObject,
 	parseLocation: parseLocation,
 	getUIDByKey: getUIDByKey,
+	getShortId: function(uid) {
+		return uid && uid.split('-')[2]
+	},
 	hasClass: function(el, cls) {
 		return el.nodeType === 1 && ClassList(el).contains(cls);
 	},

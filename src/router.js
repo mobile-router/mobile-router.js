@@ -43,9 +43,9 @@ var Router = {
 			this.error(options.error);
 			delete options.error;
 		}
-		var childOptions = {};
-		M.extend(childOptions, defOptions, options || {});
-		this.routeView = new RouteView(null, null, childOptions);
+		var rvOptions = {};
+		M.extend(rvOptions, defOptions, options || {});
+		this.routeView = new RouteView(null, null, rvOptions);
 		this._add(routes);
 	},
 
@@ -80,9 +80,9 @@ var Router = {
 			if (basePath) {
 				if (basePath === '/') basePath = '';
 				path = basePath + path;
-				if (parentRoute.parentArgsLen) {
-					len += parentRoute.parentArgsLen;
-				}
+				// if (parentRoute.parentArgsLen) {
+				// 	len += parentRoute.parentArgsLen;
+				// }
 				len += parentRoute.keys.length;
 				route.parentArgsLen = len;
 			}

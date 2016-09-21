@@ -5,7 +5,7 @@
 	<meta charset="utf-8">
 	<meta name="keywords" content="mobile-router, mobile-router.js, single page app framework,spa framework,mobile spa framework,single page app bone,spa bone,mobile spa bone,轻量级web端单页面骨架,移动web端单页面框架,单页面框架,单页面骨架">
 	<meta name="description" content="Lightweight single page bone for mobile web App.轻量级web端单页面骨架">
-	
+
 	<!-- viewport 设置 -->
 	<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
 	<!-- 允许全屏模式 -->
@@ -47,11 +47,11 @@
 	<link rel="stylesheet" type="text/css" href="/build/m.animate.css">
 	<style type="text/css">
 	* {margin:0;padding:0;}
-	
+
 	.nav {z-index:5;left:0;top:0;position:absolute;width:100%;background:#13a2d7;}
 	li {display:inline-block;vertical-align:top;}
 	a {padding:14px 20px;display:block;}
-	
+
 	.page-view {top:46px;bottom:0;height:auto;background:-webkit-linear-gradient(top,#ace7ef,#e7d9c5);background:linear-gradient(top,#ace7ef,#e7d9c5);}
 	#link {margin-top:1000px;}
 	</style>
@@ -66,6 +66,7 @@
 		<li><a href="b/2" data-title="b">b/2</a></li>
 		<li><a href="b/3" data-title="b">b/3</a></li>
 	</ul>
+	<!-- <div class="page-view"><ul class="nav"><li><a href="d/1">/d/1</a></li><li><a href="d/2">/d/2</a></li><li><a href="d/3">/d/3</a></li><li><a href="d/4">/d/4</a></li></ul><div class="page-view sub-view2"><div>/d/3<p>sub content</p></div></div></div> -->
 	<script type="text/javascript" src="/build/m.js"></script>
 	<script type="text/javascript">
 		FastClick.attach(document.body);
@@ -164,7 +165,7 @@
 							}
 						}
 					]
-					
+
 				}
 			},
 			{
@@ -193,7 +194,7 @@
 
 					routes: [
 						{
-							path: '/{cid:int}',							
+							path: '/{cid:int}',
 							getTemplate: function(cb) {
 								var that = this;
 								setTimeout(function() {
@@ -208,7 +209,7 @@
 							}
 						}
 					]
-					
+
 				}
 			},
 			{
@@ -221,16 +222,26 @@
 								'<li><a href="d/2">/d/2</a></li>' +
 								'<li><a href="d/3">/d/3</a></li>' +
 								'<li><a href="d/4">/d/4</a></li>' +
-							'</ul>'
+							'</ul>' +
+							'<div class="page-view sub-view2"></div>'
 						);
 					}, 200);
 				},
+				onActive: function() {
+					console.log('onActive d', this, arguments);
+				},
+				onEnter: function() {
+					console.log('onEnter d', this, arguments);
+				},
+				onLeave: function() {
+					console.log('onLeave d', this, arguments);
+				},
 				callback: function() {
-					console.log('callback:/d', this, arguments);
+					console.log('callback d', this, arguments);
 				},
 				onDestroy: function() {
 					// 当前被销毁时调用
-					console.log('destroy:/d', this, arguments);
+					console.log('destroy d', this, arguments);
 				},
 
 				children: {
@@ -239,12 +250,43 @@
 
 					routes: [
 						{
-							path: '/{did:int}',							
+							path: '/',
+							getTemplate: function() {
+								return '<h4>/d sub default template</h4>'
+							},
+							onActive: function() {
+								console.log('sub def onActive d', this, arguments);
+							},
+							onEnter: function() {
+								console.log('sub def onEnter d', this, arguments);
+							},
+							onLeave: function() {
+								console.log('sub def onLeave d', this, arguments);
+							},
+							callback: function() {
+								console.log('sub def callback d', this, arguments);
+							},
+							onDestroy: function() {
+								// 当前被销毁时调用
+								console.log('sub def destroy d', this, arguments);
+							},
+						},
+						{
+							path: '/{did:int}',
 							getTemplate: function(cb) {
 								var that = this;
 								setTimeout(function() {
 									cb('<div>/d/' + that.params.did + '<p>sub content</p></div>');
 								}, 200);
+							},
+							onActive: function() {
+								console.log('sub onActive d', this, arguments);
+							},
+							onEnter: function() {
+								console.log('sub onEnter d', this, arguments);
+							},
+							onLeave: function() {
+								console.log('sub onLeave d', this, arguments);
 							},
 							callback: function() {
 								console.log('sub callback d', this, arguments);
@@ -254,7 +296,7 @@
 							}
 						}
 					]
-					
+
 				}
 			}
 		], {
@@ -272,7 +314,9 @@
 			// console.log('routeChangeEnd', arguments);
 		});
 
-		M.history.start();
+		M.history.start({
+			history: true
+		});
 		M.history.on('change', function(type, state, oldState) {
 			// console.log(type, state, oldState);
 		});

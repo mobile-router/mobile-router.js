@@ -8,6 +8,7 @@ var urlCache = [];
 
 // 得到basepath
 var parseBasePath = function(path) {
+	path = path.replace(/[^\/]+$/, '');
 	return ('/' + path + '/').replace(/^\/+|\/+$/g, '/');
 };
 // 默认base path
@@ -18,7 +19,9 @@ if (defBase && defBase.length) {
 	defBase = '/';
 }
 
-var locationOrigin = M.parseLocation().origin;
+var locationObj = M.parseLocation();
+var locationPath = locationObj.pathname;
+var locationOrigin = locationObj.origin;
 
 var history = win.history;
 var agent = (win.navigator || {}).userAgent;
@@ -95,6 +98,8 @@ var History = {
 
 		// 检查设置的模式
 		this.checkMode();
+
+		this.pathExt = History.getPath(locationPath).slice(1);
 
 		// 根据模式做处理
 		switch (this.mode) {
@@ -210,7 +215,7 @@ var History = {
 	},
 
 	currentHref: function() {
-		return M.location.href.replace(hashbangPrefix + '/', '');
+		return M.location.href.replace(History.pathExt, '').replace(hashbangPrefix + '/', '');
 	},
 
 	/**
