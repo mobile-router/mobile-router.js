@@ -41,6 +41,8 @@ var MODE_MAP = {
 
 var hashbangPrefix = '#!';
 
+var hashCacheState = '';
+
 var History = {
 
 	mode: MODE_MAP.hashbang,
@@ -229,11 +231,15 @@ var History = {
 		// 如果是允许改变history 且其dataset中不包含href的话才会改变history
 		// 规则就是：
 		// data-href="newUrl"会被认为是在当前页中切换，也就是局部禁用pushstate
-		if (this.mode !== MODE_MAP.abstract && M.isUndefined(state.data.href) && state.url !== History.currentHref()) {
+		if (this.mode !== MODE_MAP.abstract && state.url !== History.currentHref()) {
 			if (this.mode === MODE_MAP.hashbang) {
+				if (M.isUndefined(state.data.href)) {
+					hashCacheState = state;
 					M.location.hash = hashbangPrefix + state.rpath;
+					return;
+				}
 			} else {
-					history[state.replace ? 'replaceState' : 'pushState'](state, state.title, state.url);
+				M.isUndefined(state.data.href) && history[state.replace ? 'replaceState' : 'pushState'](state, state.title, state.url);
 			}
 		}
 		this.onChange({
@@ -245,9 +251,14 @@ var History = {
 	 * history改变回调
 	 */
 	onChange: function(e) {
+		if (e && e.type === 'hashchange') {
+			e.state = hashCacheState;
+		}
 		var state = e && e.state || History.getUrlState(History.currentHref());
 		var oldState = History.getCurrentState();
-
+		
+		hashCacheState = null;
+		
 		// 如果新的url和旧的url只是hash不同，那么应该走scrollIntoView
 		var scrollToEle;
 		if (oldState && state.rurl === oldState.rurl) {
@@ -280,7 +291,7 @@ var History = {
 		}
 		M.document.title = state.title;
 		if (newIndex !== History.index) {
-				History.preIndex = History.index;
+			History.preIndex = History.index;
 		}
 		History.index = newIndex;
 		// 触发改变事件
@@ -317,7 +328,7 @@ var History = {
 		if (!url) {
 			url = urlCache[this.index - 1];
 			if (!url) {
-					return null;
+				return null;
 			}
 		}
 		return stateCache[url] || null;

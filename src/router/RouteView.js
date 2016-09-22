@@ -60,16 +60,18 @@ M.extend(RouteView.prototype, {
 			if (args) {
 				_path = args.shift();
 				routeIns = el.ins(_path, query || {}, args, options);
-				that._route(routeIns, function () {
-					M.nextTick(function() {
+				routeIns.targetPath = path;
+				that._route(routeIns, function() {
+					// M.nextTick(function() {
 						if (el.routeView && !routeIns.destroyed) {
 							// 子 RouteView
 							if (!el.routeView.route(path, routeIns.query, M.extend({parentUID: routeIns.id}, options))) {
 								// 子的并没有匹配到 例如说从 子路由 恢复到 父路由的时候
-								el.routeView.leave(options);
+								// 如果说子 routeView 当前active的path和targetPath一样的话 就没必要leave了
+								el.routeView.pageViewState && el.routeView.pageViewState.path !== routeIns.targetPath && el.routeView.leave(options);
 							}
 						}
-					});
+					// });
 				});
 				ret = true;
 			}
@@ -83,8 +85,8 @@ M.extend(RouteView.prototype, {
 	_redirectTo: function(routeIns, isAsync) {
 		var route = routeIns.route;
 		var rtUrl;
-		if (route.redirectTo && (rtUrl = doCallback(routeIns, 'redirectTo'))) {
-			if (!routeIns.equalTo(rtUrl, true)) {
+		if (routeIns.path === routeIns.targetPath && route.redirectTo && (rtUrl = doCallback(routeIns, 'redirectTo'))) {
+			if (!routeIns.equalTo(rtUrl, true) && rtUrl !== routeIns.targetPath) {
 				if (isAsync) M.nextTick(reT);
 				else reT();
 				return true;
@@ -93,7 +95,9 @@ M.extend(RouteView.prototype, {
 		return false;
 		function reT() {
 			!routeIns.element && route.destroyIns(routeIns);
-			var data = {};
+			var data = {
+				_redirectedOriginPath: routeIns.path
+			};
 			if (!isAsync) data.redirectToSync = true;
 			if (!route.redirectPushState) data.href = rtUrl;
 			M.router.navigate(rtUrl, data);
@@ -145,6 +149,11 @@ M.extend(RouteView.prototype, {
 
 	_route: function(routeIns, cb) {
 		if (routeIns === this.pageViewState) {
+			// 判断 redirect
+			// if (routeIns.options.state.data._redirectedOriginPath || routeIns.path === routeIns.targetPath) {
+			// 	this._redirectTo(routeIns);
+			// }
+			this._redirectTo(routeIns, true);	
 			return cb();
 		}
 		var route = routeIns.route;
@@ -175,10 +184,10 @@ M.extend(RouteView.prototype, {
 				getTemplateCb(route.getTemplate.call(routeIns));
 			}
 		} else {
-			// 跳转
-			// if (!route.getTemplate && this._redirectTo(routeIns, true)) {
-			// 	return;
-			// }
+			// 无模板 直接跳转
+			if (!route.getTemplate && this._redirectTo(routeIns, true)) {
+				return;
+			}
 			doCallback(routeIns, 'onActive');
 			M.router.trigger('routeChangeStart', routeIns, args);
 			getTemplateCb(this.templateCache[routeIns.path]);
@@ -286,21 +295,18 @@ M.extend(RouteView.prototype, {
 			routeIns.cached = true;
 		}
 		routeIns.setEle(_pageViewEle);
-		var shown = M.hasClass(_pageViewEle, ENTERCLASS);
 		this._initEle(routeIns);
 		var route = routeIns.route;
-		var redirected = false;
-		if (shown && routeIns.element === _pageViewEle && that._redirectTo(routeIns, true)) {
-			// redirect
-			redirected = true;
-			childDone();
-			return;
-		}
+		// var redirected = false;
+		// if (routeIns.element === _pageViewEle && that._redirectTo(routeIns, true)) {
+		// 	// redirect
+		// 	redirected = true;
+		// 	childDone();
+		// 	return;
+		// }
 		// 模板不一样 更新
 		if ((!routeIns.cached && !nowView) || template !== routeIns._oldTemplate) {
-			if (!shown) {
-				M.innerHTML(_pageViewEle, template);
-			}
+			M.innerHTML(_pageViewEle, template);
 			routeIns.cached = false;
 		}
 
@@ -314,21 +320,14 @@ M.extend(RouteView.prototype, {
 				that.pagesCache.splice(index, 1);
 			}
 			that.pagesCache.push(routeIns);
-			setHtml();
-			// _endCall();
+			setContainer();
 		}
 		function childDone() {
-			setHtml();
+			setContainer();
 			doCallback(routeIns, 'onEnter');
 			_endCall();
 		}
-		function setHtml() {
-			if (shown && routeView) {
-				if (!routeIns.cached) {
-					M.innerHTML(_pageViewEle, template);
-					routeIns.cached = false;
-				}
-			}
+		function setContainer() {
 			if (routeView) {
 				routeView.setViewsContainer(routeIns.element);
 			}
@@ -340,7 +339,8 @@ M.extend(RouteView.prototype, {
 			}
 			doCallback(routeIns, 'callback');
 			M.router.trigger('routeChangeEnd', routeIns, routeIns.args);
-			// !redirected && !cb && that._redirectTo(routeIns);
+			// 结束后判断是否 redirect
+			that._redirectTo(routeIns);
 		}
 	},
 
@@ -363,10 +363,14 @@ M.extend(RouteView.prototype, {
 		if (this.pageViewState && !this.pageViewState.destroyed) {
 			// 存在当前活动的
 			var childRouteView = this.pageViewState.route.routeView;
-			if (childRouteView) {
-				childRouteView.leave(options);
-			}
-			this._transView(this.pageViewState, options);
+			this._transView(this.pageViewState, options, function() {
+				if (childRouteView) {
+					options = M.extend({}, options);
+					// 不要animation
+					options.first = true;
+					childRouteView.leave(options);
+				}
+			});
 		}
 	},
 
@@ -384,15 +388,16 @@ M.extend(RouteView.prototype, {
 		var ele = pageViewState && pageViewState.element;
 		var that = this;
 
+		this.pageViewState = routeIns;
+
 		if (pageViewState === routeIns) {
 			// 两者相等 认为是leave
 			_pageViewEle = null;
+			this.pageViewState = null;
 		}
 
-		this.pageViewState = routeIns;
-
 		var animation = this._shouldAni(this.options.animation, routeIns, options);
-		animation = animation && !routeIns.redirectTo && !routeIns.options.state.data.redirectToSync;
+		// animation = animation && !routeIns.options.state.data.redirectToSync;
 
 		if (animation) {
 			var aniEnterClass = aniClass;
@@ -438,8 +443,8 @@ M.extend(RouteView.prototype, {
 			M.scrollToHash(options.state.hash);
 		}
 
-		var entered = false;
-		var leaved = false;
+		var entered = !_pageViewEle;
+		var leaved = !ele;
 
 		if (!animation) {
 			// 没有动画
@@ -470,7 +475,9 @@ M.extend(RouteView.prototype, {
 				// leave 模式
 				endCall && endCall();
 				checkPageViews();
-				that.pageViewState = null;
+				if (routeIns === that.pageViewState) {
+					that.pageViewState = null;
+				}
 				return;
 			}
 			// 如果有子的 routeView 那么需要 leave
