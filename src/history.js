@@ -202,7 +202,7 @@ var History = {
 		if (!urlOrigin) {
 			urlOrigin = M.parseUrl(url).origin;
 		}
-		var rext = /^(javascript:)|(mailto:)|(tel:)/;
+		var rext = /^(javascript|mailto|tel):/;
 		return url && locationOrigin === urlOrigin && !rext.test(url);
 	},
 
