@@ -105,15 +105,8 @@ var History = {
 		this.pathExt = History.getPath(locationPath).slice(1);
 
 		// 根据模式做处理
-		switch (this.mode) {
-			case MODE_MAP.history:
-				win.addEventListener('popstate', this.onChange);
-				break;
-			case MODE_MAP.hashbang:
-				win.addEventListener('hashchange', this.onChange);
-				break;
-			case MODE_MAP.abstract:
-				break;
+		if (this.mode !== MODE_MAP.abstract) {
+			win.addEventListener(this.mode === MODE_MAP.history ? 'popstate' : 'hashchange', this.onChange);
 		}
 		M.document.addEventListener('click', this.onDocClick);
 
@@ -126,15 +119,8 @@ var History = {
 	 * 停止监听
 	 */
 	stop: function() {
-		switch (this.mode) {
-			case MODE_MAP.history:
-				win.removeEventListener('popstate', this.onChange);
-				break;
-			case MODE_MAP.hashbang:
-				win.removeEventListener('hashchange', this.onChange);
-				break;
-			case MODE_MAP.abstract:
-				break;
+		if (this.mode !== MODE_MAP.abstract) {
+			win.removeEventListener(this.mode === MODE_MAP.history ? 'popstate' : 'hashchange', this.onChange);
 		}
 		M.document.removeEventListener('click', this.onDocClick);
 		this.startd = false;
@@ -203,7 +189,7 @@ var History = {
 		if (!urlOrigin) {
 			urlOrigin = M.parseUrl(url).origin;
 		}
-		var rext = /^(javascript|mailto|tel):/;
+		var rext = /^(javascript|mailto|tel):/i;
 		return url && locationOrigin === urlOrigin && !rext.test(url);
 	},
 
@@ -236,6 +222,7 @@ var History = {
 			if (this.mode === MODE_MAP.hashbang) {
 				if (M.isUndefined(state.data.href)) {
 					hashCacheState = state;
+					// 更改hash后会自动触发hashchange事件
 					M.location.hash = hashbangPrefix + state.rpath;
 					return;
 				}
