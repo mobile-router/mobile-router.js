@@ -34,11 +34,11 @@ function Route(path, callback, opts) {
 
 	var redirectTo = this.redirectTo;
 	if (M.isString(redirectTo)) {
-		this.redirectTo = function() {
+		redirectTo = this.redirectTo = function() {
 			return redirectTo;
 		};
 	}
-	if (this.redirectTo && M.isUndefined(this.redirectPushState)) {
+	if (redirectTo && M.isUndefined(this.redirectPushState)) {
 		this.redirectPushState = true;
 	}
 	if (!this.parentArgsLen) this.parentArgsLen = 0;

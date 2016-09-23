@@ -242,13 +242,16 @@ return /******/ (function(modules) { // webpackBootstrap
 		path = path.replace(/[^\/]+$/, '');
 		return ('/' + path + '/').replace(/^\/+|\/+$/g, '/');
 	};
-	// 默认base path
-	var defBase = M.document.getElementsByTagName('base');
-	if (defBase && defBase.length) {
-		defBase = parseBasePath(defBase[0].getAttribute('href'));
-	} else {
-		defBase = '/';
-	}
+	var getDefBase = function() {
+		// 默认base path
+		var defBase = M.document.getElementsByTagName('base');
+		if (defBase && defBase.length) {
+			defBase = parseBasePath(defBase[0].getAttribute('href'));
+		} else {
+			defBase = '/';
+		}
+		return defBase;
+	};
 
 	var locationObj = M.parseLocation();
 	var locationPath = locationObj.pathname;
@@ -265,9 +268,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	var supportHashChange = !!('onhashchange' in win);
 
 	var MODE_MAP = {
-			hashbang: 1,
-			history: 2,
-			abstract: 3
+		hashbang: 1,
+		history: 2,
+		abstract: 3
 	};
 
 	var hashbangPrefix = '#!';
@@ -291,19 +294,15 @@ return /******/ (function(modules) { // webpackBootstrap
 		preIndex: -1,
 
 		/*base path*/
-		base: defBase,
+		base: '/',
 
 		checkMode: function() {
-			if (this.options.hashbang) {
-				this.mode = MODE_MAP.hashbang;
-			} else if (this.options.history) {
-				this.mode = MODE_MAP.history;
-			} else if (this.options.abstract) {
-				this.mode = MODE_MAP.abstract;
-			} else {
-				// 默认 hashbang
-				this.mode = MODE_MAP.hashbang;
-			}
+			var that = this;
+			'abstract,history,hashbang'.replace(M.rword, function(mode) {
+				if (that.options[mode]) {
+					that.mode = MODE_MAP[mode];
+				}
+			});
 			if (this.mode === MODE_MAP.history && !this.supportPushState) {
 				// history 模式 但是不支持 pushstate
 				this.mode = MODE_MAP.hashbang;
@@ -324,6 +323,8 @@ return /******/ (function(modules) { // webpackBootstrap
 			var base = options.base;
 			if (M.isDefined(base) && M.isString(base)) {
 				this.base = parseBasePath(base);
+			} else {
+				this.base = getDefBase();
 			}
 			this.startd = true;
 
@@ -335,15 +336,8 @@ return /******/ (function(modules) { // webpackBootstrap
 			this.pathExt = History.getPath(locationPath).slice(1);
 
 			// 根据模式做处理
-			switch (this.mode) {
-				case MODE_MAP.history:
-					win.addEventListener('popstate', this.onChange);
-					break;
-				case MODE_MAP.hashbang:
-					win.addEventListener('hashchange', this.onChange);
-					break;
-				case MODE_MAP.abstract:
-					break;
+			if (this.mode !== MODE_MAP.abstract) {
+				win.addEventListener(this.mode === MODE_MAP.history ? 'popstate' : 'hashchange', this.onChange);
 			}
 			M.document.addEventListener('click', this.onDocClick);
 
@@ -356,15 +350,8 @@ return /******/ (function(modules) { // webpackBootstrap
 		 * 停止监听
 		 */
 		stop: function() {
-			switch (this.mode) {
-				case MODE_MAP.history:
-					win.removeEventListener('popstate', this.onChange);
-					break;
-				case MODE_MAP.hashbang:
-					win.removeEventListener('hashchange', this.onChange);
-					break;
-				case MODE_MAP.abstract:
-					break;
+			if (this.mode !== MODE_MAP.abstract) {
+				win.removeEventListener(this.mode === MODE_MAP.history ? 'popstate' : 'hashchange', this.onChange);
 			}
 			M.document.removeEventListener('click', this.onDocClick);
 			this.startd = false;
@@ -433,7 +420,7 @@ return /******/ (function(modules) { // webpackBootstrap
 			if (!urlOrigin) {
 				urlOrigin = M.parseUrl(url).origin;
 			}
-			var rext = /^(javascript|mailto|tel):/;
+			var rext = /^(javascript|mailto|tel):/i;
 			return url && locationOrigin === urlOrigin && !rext.test(url);
 		},
 
@@ -466,6 +453,7 @@ return /******/ (function(modules) { // webpackBootstrap
 				if (this.mode === MODE_MAP.hashbang) {
 					if (M.isUndefined(state.data.href)) {
 						hashCacheState = state;
+						// 更改hash后会自动触发hashchange事件
 						M.location.hash = hashbangPrefix + state.rpath;
 						return;
 					}
@@ -851,27 +839,6 @@ return /******/ (function(modules) { // webpackBootstrap
 		return target;
 	};
 	M.nextTick = new function() {
-		var tickImmediate = win.setImmediate;
-		var tickObserver = win.MutationObserver;
-		if (tickImmediate) { //IE10 \11 edage
-			return tickImmediate.bind(win);
-		}
-		var queue = []
-		function callback() {
-			var n = queue.length;
-			for (var i = 0; i < n; i++) {
-				queue[i]();
-			}
-			queue = queue.slice(n);
-		}
-		if (tickObserver) { // 支持MutationObserver
-			var node = document.createTextNode('M');
-			new tickObserver(callback).observe(node, {characterData: true});
-			return function(fn) {
-				queue.push(fn);
-				node.data = Math.random();
-			};
-		}
 		return function(fn) {
 			setTimeout(fn);
 		};
@@ -964,8 +931,7 @@ return /******/ (function(modules) { // webpackBootstrap
 			cls = cls.trim()
 			var node = this.node
 			if (rsvg.test(node)) {
-				//SVG元素的className是一个对象 SVGAnimatedString { baseVal="", animVal=""}，只能通过set/getAttribute操作
-				node.setAttribute("class", cls)
+				node.setAttribute('class', cls)
 			} else {
 				node.className = cls
 			}
@@ -1183,11 +1149,11 @@ return /******/ (function(modules) { // webpackBootstrap
 
 		var redirectTo = this.redirectTo;
 		if (M.isString(redirectTo)) {
-			this.redirectTo = function() {
+			redirectTo = this.redirectTo = function() {
 				return redirectTo;
 			};
 		}
-		if (this.redirectTo && M.isUndefined(this.redirectPushState)) {
+		if (redirectTo && M.isUndefined(this.redirectPushState)) {
 			this.redirectPushState = true;
 		}
 		if (!this.parentArgsLen) this.parentArgsLen = 0;
