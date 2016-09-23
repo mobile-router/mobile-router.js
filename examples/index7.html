@@ -161,7 +161,7 @@
 		});
 
 		M.history.start({
-			enablePushState: false
+			abstract: true
 		});
 		M.history.on('change', function(type, state, oldState) {
 			// console.log(type, state, oldState);
