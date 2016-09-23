@@ -310,7 +310,7 @@ M.extend(RouteView.prototype, {
 		this._initEle(_pageViewEle);
 		var route = routeIns.route;
 		// 模板不一样 更新
-		if ((!routeIns.cached && !nowView) || template !== routeIns._oldTemplate) {
+		if (!routeIns.cached || template !== routeIns._oldTemplate) {
 			M.innerHTML(_pageViewEle, template);
 			routeIns.cached = false;
 		}
