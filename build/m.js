@@ -1476,35 +1476,42 @@ return /******/ (function(modules) { // webpackBootstrap
 	M.extend(RouteView.prototype, {
 
 		route: function(path, query, options) {
-			var routes = this.routes;
 			if (!options) options = {};
-			var ret = false;
-			var that = this;
-			for (var i = 0, el, _path, routeIns, keys; el = routes[i]; i++) {
-				var args = path.match(el.$regexp || el.regexp);
-				if (args) {
-					_path = args.shift();
-					routeIns = el.ins(_path, query || {}, args, options);
-					routeIns.targetPath = path;
-					that._route(routeIns, function() {
-						// M.nextTick(function() {
-							if (el.routeView && !routeIns.destroyed) {
-								// 子 RouteView
-								if (!el.routeView.route(path, routeIns.query, M.extend({parentUID: routeIns.id}, options))) {
-									// 子的并没有匹配到 例如说从 子路由 恢复到 父路由的时候
-									// 如果说子 routeView 当前active的path和targetPath一样的话 就没必要leave了
-									el.routeView.pageViewState && el.routeView.pageViewState.path !== routeIns.targetPath && el.routeView.leave(options);
-								}
-							}
-						// });
-					});
-					ret = true;
-				}
-				if (ret) {
-					break;
+			return this._match('regexp', path, query, options) || this._match('$regexp', path, query, options);
+		},
+
+		_match: function(regexp, path, query, options) {
+			if (!regexp) {
+				regexp = 'regexp';
+			}
+			for (var i = 0, el, args; el = this.routes[i]; i++) {
+				if (el[regexp]) {
+					args = path.match(el[regexp]);
+					if (args) {
+						this._matched(el, path, args, query, options);
+						return true;
+					}
 				}
 			}
-			return ret;
+			return false;
+		},
+
+		_matched: function(el, path, args, query, options) {
+			var _path = args.shift();
+			routeIns = el.ins(_path, query || {}, args, options);
+			routeIns.targetPath = path;
+			this._route(routeIns, function() {
+				// M.nextTick(function() {
+					if (el.routeView && !routeIns.destroyed) {
+						// 子 RouteView
+						if (!el.routeView.route(path, routeIns.query, M.extend({parentUID: routeIns.id}, options))) {
+							// 子的并没有匹配到 例如说从 子路由 恢复到 父路由的时候
+							// 如果说子 routeView 当前active的path和targetPath一样的话 就没必要leave了
+							el.routeView.pageViewState && el.routeView.pageViewState.path !== routeIns.targetPath && el.routeView.leave(options);
+						}
+					}
+				// });
+			});
 		},
 
 		_redirectTo: function(routeIns, isAsync) {
@@ -1794,7 +1801,7 @@ return /******/ (function(modules) { // webpackBootstrap
 			}
 
 			var animation = this._shouldAni(this.options.animation, routeIns, options);
-			// animation = animation && !routeIns.options.state.data.redirectToSync;
+			animation = animation && !routeIns.options.state.data.redirectToSync;
 
 			if (animation) {
 				var aniEnterClass = ANICLASS;
