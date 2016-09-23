@@ -23,7 +23,6 @@ var getDefBase = function() {
 };
 
 var locationObj = M.parseLocation();
-var locationPath = locationObj.pathname;
 var locationOrigin = locationObj.origin;
 
 var history = win.history;
@@ -101,8 +100,6 @@ var History = {
 
 		// 检查设置的模式
 		this.checkMode();
-
-		this.pathExt = History.getPath(locationPath).slice(1);
 
 		// 根据模式做处理
 		if (this.mode !== MODE_MAP.abstract) {
@@ -204,7 +201,7 @@ var History = {
 	},
 
 	currentHref: function() {
-		return M.location.href.replace(History.pathExt, '').replace(hashbangPrefix + '/', '');
+		return M.location.href.replace(hashbangPrefix + '/', '');
 	},
 
 	/**
