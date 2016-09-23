@@ -18,8 +18,13 @@ var aniEndName = (function() {
 	return 'animationend';
 }());
 
-var defViewClass = 'page-view';
+var DEFVIEWCLASS = 'page-view';
 var ENTERCLASS = 'in';
+var LEAVECLASS = 'out';
+var REVERSECLASS = 'reverse';
+var ANICLASS = 'ani';
+var OVERHIDDEN = 'overhidden';
+var ALLCLASS = ENTERCLASS + ' ' + REVERSECLASS;
 
 function RouteView(parentRoute, options) {
 	if (parentRoute) {
@@ -107,7 +112,7 @@ M.extend(RouteView.prototype, {
 	_getDefaultEle: function(routeIns) {
 		var initView;
 		if (!this.pageViewState &&
-				(initView = this.viewsContainer.getElementsByClassName(defViewClass)[0]) &&
+				(initView = this.viewsContainer.getElementsByClassName(DEFVIEWCLASS)[0]) &&
 				(!initView.id || initView.id === routeIns.id)
 			) {
 			return initView;
@@ -122,7 +127,7 @@ M.extend(RouteView.prototype, {
 			// 初次进入 获得内容 得到默认模板 后端渲染
 			if (routeIns.route.routeView) {
 				// 有 routeView 证明有子view
-				var pageViews = initView.getElementsByClassName(defViewClass);
+				var pageViews = initView.getElementsByClassName(DEFVIEWCLASS);
 				// 获取初始的 innerHTML 作为缓存了的模板内容
 				var childViews = [];
 				M.each(pageViews, function(pv) {
@@ -295,15 +300,8 @@ M.extend(RouteView.prototype, {
 			routeIns.cached = true;
 		}
 		routeIns.setEle(_pageViewEle);
-		this._initEle(routeIns);
+		this._initEle(_pageViewEle);
 		var route = routeIns.route;
-		// var redirected = false;
-		// if (routeIns.element === _pageViewEle && that._redirectTo(routeIns, true)) {
-		// 	// redirect
-		// 	redirected = true;
-		// 	childDone();
-		// 	return;
-		// }
 		// 模板不一样 更新
 		if ((!routeIns.cached && !nowView) || template !== routeIns._oldTemplate) {
 			M.innerHTML(_pageViewEle, template);
@@ -311,29 +309,21 @@ M.extend(RouteView.prototype, {
 		}
 
 		var routeView = route.routeView;
-		endCall();
-		this._transView(routeIns, options, _endCall);
-		function endCall() {
-			var index = M.Array.indexOfByKey(that.pagesCache, routeIns,  'path');
-			if (~index) {
-				// 移掉当前的
-				that.pagesCache.splice(index, 1);
-			}
-			that.pagesCache.push(routeIns);
-			setContainer();
+		// 更新 pagesCache
+		var index = M.Array.indexOfByKey(that.pagesCache, routeIns,  'path');
+		if (~index) {
+			// 移掉当前的
+			that.pagesCache.splice(index, 1);
 		}
-		function childDone() {
-			setContainer();
-			doCallback(routeIns, 'onEnter');
-			_endCall();
+		that.pagesCache.push(routeIns);
+
+		if (routeView) {
+			routeView.setViewsContainer(routeIns.element);
 		}
-		function setContainer() {
-			if (routeView) {
-				routeView.setViewsContainer(routeIns.element);
-			}
-			cb && cb();
-		}
-		function _endCall() {
+		// 不需要等到昨晚动画即可
+		cb && cb();
+
+		this._transView(routeIns, options, function() {
 			if (pageViewState && pageViewState.element) {
 				M.removeClass(pageViewState.element, 'on-out');
 			}
@@ -341,22 +331,13 @@ M.extend(RouteView.prototype, {
 			M.router.trigger('routeChangeEnd', routeIns, routeIns.args);
 			// 结束后判断是否 redirect
 			that._redirectTo(routeIns);
-		}
+		});
 	},
 
-	_initEle: function(routeIns) {
-		var ele = routeIns.element;
-
-		var enterClass = ENTERCLASS;
-		var leaveClass = 'out';
-		var initPosClass = leaveClass;
-		var reverseClass = 'reverse';
-		var aniClass = 'ani';
-		var allClass = enterClass + ' ' + reverseClass;
-
-			// 重置class
-		M.removeClass(ele, allClass);
-		M.addClass(ele, defViewClass + ' ' + leaveClass + ' ' + this.options.viewClass);
+	_initEle: function(ele) {
+		// 重置class
+		M.removeClass(ele, ALLCLASS);
+		M.addClass(ele, DEFVIEWCLASS + ' ' + LEAVECLASS + ' ' + this.options.viewClass);
 	},
 
 	leave: function(options) {
@@ -376,12 +357,8 @@ M.extend(RouteView.prototype, {
 
 	_transView: function(routeIns, options, endCall) {
 		var enterClass = ENTERCLASS;
-		var leaveClass = 'out';
+		var leaveClass = LEAVECLASS;
 		var initPosClass = leaveClass;
-		var reverseClass = 'reverse';
-		var aniClass = 'ani';
-		var allClass = enterClass + ' ' + reverseClass;
-		var overhidden = 'overhidden';
 
 		var _pageViewEle = routeIns.element;
 		var pageViewState = this.pageViewState;
@@ -400,8 +377,8 @@ M.extend(RouteView.prototype, {
 		// animation = animation && !routeIns.options.state.data.redirectToSync;
 
 		if (animation) {
-			var aniEnterClass = aniClass;
-			var aniLeaveClass = aniClass;
+			var aniEnterClass = ANICLASS;
+			var aniLeaveClass = ANICLASS;
 			aniEnterClass += ' ' + this.getOption(routeIns.route, options.state, 'aniClass');
 			if (!options.first && pageViewState) {
 				aniLeaveClass += ' ' + this.getOption(pageViewState.route, options.oldState, 'aniClass');
@@ -410,16 +387,16 @@ M.extend(RouteView.prototype, {
 			enterClass = aniEnterClass + ' ' + enterClass;
 			leaveClass = aniLeaveClass + ' ' + leaveClass;
 			// 给viewsContainer增加class overhidden 为了不影响做动画效果
-			M.addClass(this.viewsContainer, overhidden);
+			M.addClass(this.viewsContainer, OVERHIDDEN);
 		}
 
 		if (options.direction === 'back') {
-			enterClass += ' ' + reverseClass;
-			leaveClass += ' ' + reverseClass;
+			enterClass += ' ' + REVERSECLASS;
+			leaveClass += ' ' + REVERSECLASS;
 		}
 
 		if (ele) {
-			M.removeClass(ele, allClass);
+			M.removeClass(ele, ALLCLASS);
 			M.addClass(ele, leaveClass);
 			// reflow
 			ele.offsetWidth = ele.offsetWidth;
@@ -488,7 +465,7 @@ M.extend(RouteView.prototype, {
 		}
 		function checkPageViews() {
 			if (!entered || !leaved) return;
-			M.removeClass(that.viewsContainer, overhidden);
+			M.removeClass(that.viewsContainer, OVERHIDDEN);
 			that.checkPageViews(routeIns);
 		}
 	},
