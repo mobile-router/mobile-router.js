@@ -15,9 +15,9 @@ The [mobile-router.js-demo](https://github.com/dolymood/mobile-router.js-demo) i
 
 [mobile-router.js-sample](https://github.com/dolymood/mobile-router.js-sample) - A mobile-router.js demo like [ui-router sample](http://angular-ui.github.io/ui-router/sample/)
 
-[中文 README](https://github.com/dolymood/mobile-router.js/blob/master/README-zh_CN.md)
+[中文 README](https://github.com/dolymood/mobile-router.js/blob/master/README_zh-CN.md)
 
-Only 8.8k when gzipped
+Less than 9k when gzipped
 
 ## How can i install it?
 
@@ -228,14 +228,22 @@ M.router.on('routeChangeEnd', function(currentRouteState) {
 //  start history
 M.history.start({
 	base: '/', // base path of history. Default the url base in the head of your main html file (<base href="/my-base">) or '/'
-	enablePushState: true // enable pushstate or not
+	enablePushState: true, // enable pushstate or not (less that 2.x)
+	// (2.0.0+)
+	// set `history`, `hashbang` or `abstract`
+	// default `hashbang` 
+	history: true,
+	// or
+	hashbang: true,
+	// or
+	abstract: true
 });
 
 ```
 
 ## Advantages?
 
-* Lightweight, Easy. Based on [history](https://developer.mozilla.org/en-US/docs/Web/Guide/API/DOM/Manipulating_the_browser_history), [window.onpopstate](https://developer.mozilla.org/en-US/docs/WindowEventHandlers.onpopstate).
+* Lightweight, Easy.
 
 * Nested routes & views (1.5.0+).
 
@@ -249,7 +257,7 @@ M.history.start({
 
 * Switching pages use `CSS animation`.
 
-* Enable `pushstate` or not.
+* History mode: `history`, `hashbang` or `abstract`
 
 ## About some configs
 

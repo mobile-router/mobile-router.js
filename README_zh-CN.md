@@ -15,13 +15,17 @@ mobile-router.js — A lightweight single page bone for mobile web App.轻量级
 
 [mobile-router.js-sample](https://github.com/dolymood/mobile-router.js-sample) - A mobile-router.js demo like [ui-router sample](http://angular-ui.github.io/ui-router/sample/)
 
-gziphou仅有8.8k
+gzip后不到9k
 
 ### 优势：
 
-* 使用简单、方便、轻量，基于 [history](https://developer.mozilla.org/en-US/docs/Web/Guide/API/DOM/Manipulating_the_browser_history)、[window.onpopstate](https://developer.mozilla.org/en-US/docs/WindowEventHandlers.onpopstate)。
+* 使用简单、方便、轻量。
+
+* 利用`CSS animation`控制动画转场（页面切换）效果，也可设置关闭动画效果。
 
 * 支持路由视图嵌套 (1.5.0+)。
+
+* 完整生命周期管理。
 
 * 无依赖，可与其他框架（库）搭配自由使用，例如：`jquery`, `zepto`, `iscroll`等。
 
@@ -31,13 +35,9 @@ gziphou仅有8.8k
 
 * 自动缓存部分画面，可配置缓存数量，默认3个。
 
-* 每个路由都有对应的`callback`和`onDestroy`等配置方法，分别用于显示了对应画面后的回调以及当该画面销毁时回调。
+* 根据`hash`，可自由跳转到对应`id`元素位置。
 
-* 利用`CSS animation`控制动画转场（页面切换）效果，也可设置关闭动画效果。
-
-* “保留”浏览器原生`hash`功能，根据`hash`，可自由跳转到对应`id`元素位置。
-
-* 可配置`enablePushState`决定是否使用`pushstate`功能，默认启用；不启用的话，仅仅影响的是不产生历史，但是路由依旧好使的，也就是还是基于`url`的。
+* `history`、`hashbang`（默认）、`abstract`三种`history`模式任选。
 
 ### 一些注意点：
 
@@ -47,7 +47,7 @@ gziphou仅有8.8k
 
 * `M.history`的默认的 base path 是页面中`base`元素的`href`的值，如果没有，则默认是`/`；也可以在`M.history.start()`时传入。
 
-* 对于[history](https://developer.mozilla.org/en-US/docs/Web/Guide/API/DOM/Manipulating_the_browser_history)、[window.onpopstate](https://developer.mozilla.org/en-US/docs/WindowEventHandlers.onpopstate)不支持或者支持不够好的浏览器来说，能够正常匹配对应`route`，也就是说能够正常调用`route`配置项中的`getTemplate`以及`callback`（`onDestroy`除外），其他功能都没有，点击链接直接刷新页面。这样就可以在不改变代码的情况下，适配了不支持的浏览器。当然这种情况也可以通过取得`M.history.support`来判断，如果不支持的话，可以在调用`M.history.start`时设置参数`enablePushState`为`false`也可以，但不建议，因为没有历史记录了。
+* 对于[history](https://developer.mozilla.org/en-US/docs/Web/Guide/API/DOM/Manipulating_the_browser_history)、[window.onpopstate](https://developer.mozilla.org/en-US/docs/WindowEventHandlers.onpopstate)不支持或者支持不够好的浏览器来说，自动回退到`hashbang`模式，如果`hashbang`也不支持的话，就退回到`abstract`模式了；`abstract`模式能够正常匹配对应`route`，但是不会产生历史记录。
 
 ### 使用方法：
 
@@ -247,14 +247,24 @@ M.router.on('routeChangeEnd', function(currentRouteState) {
 // 开始 监听history
 M.history.start({
 	// base: '/', // base path
-	// enablePushState: true // 启用pushstate
+	// enablePushState: true, // 启用pushstate （2.x之前版本）
+	// (2.0.0+)
+	// `history`, `hashbang` or `abstract`
+	// default `hashbang` 
+	history: true,
+	// or
+	hashbang: true,
+	// or
+	abstract: true
 });
 
 ```
 
 ### 关于配置
 
-`animation`、`aniClass`和`cacheTemplate`配置，依次取的是链接元素上的`data-xxx`->单个route规则中对一个的配置项->整体route配置规则中的配置。
+`animation`、`aniClass`和`cacheTemplate`配置，依次取的是：
+
+链接元素上的`data-xxx`->单个route规则中对一个的配置项->整体route配置规则中的配置。
 
 ### examples中示例
 
