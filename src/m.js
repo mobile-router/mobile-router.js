@@ -175,27 +175,6 @@ var extend = M.extend = function() {
 	return target;
 };
 M.nextTick = new function() {
-	var tickImmediate = win.setImmediate;
-	var tickObserver = win.MutationObserver;
-	if (tickImmediate) { //IE10 \11 edage
-		return tickImmediate.bind(win);
-	}
-	var queue = []
-	function callback() {
-		var n = queue.length;
-		for (var i = 0; i < n; i++) {
-			queue[i]();
-		}
-		queue = queue.slice(n);
-	}
-	if (tickObserver) { // 支持MutationObserver
-		var node = document.createTextNode('M');
-		new tickObserver(callback).observe(node, {characterData: true});
-		return function(fn) {
-			queue.push(fn);
-			node.data = Math.random();
-		};
-	}
 	return function(fn) {
 		setTimeout(fn);
 	};
@@ -288,8 +267,7 @@ var ClassListMethods = {
 		cls = cls.trim()
 		var node = this.node
 		if (rsvg.test(node)) {
-			//SVG元素的className是一个对象 SVGAnimatedString { baseVal="", animVal=""}，只能通过set/getAttribute操作
-			node.setAttribute("class", cls)
+			node.setAttribute('class', cls)
 		} else {
 			node.className = cls
 		}
