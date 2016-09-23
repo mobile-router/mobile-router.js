@@ -11,13 +11,16 @@ var parseBasePath = function(path) {
 	path = path.replace(/[^\/]+$/, '');
 	return ('/' + path + '/').replace(/^\/+|\/+$/g, '/');
 };
-// 默认base path
-var defBase = M.document.getElementsByTagName('base');
-if (defBase && defBase.length) {
-	defBase = parseBasePath(defBase[0].getAttribute('href'));
-} else {
-	defBase = '/';
-}
+var getDefBase = function() {
+	// 默认base path
+	var defBase = M.document.getElementsByTagName('base');
+	if (defBase && defBase.length) {
+		defBase = parseBasePath(defBase[0].getAttribute('href'));
+	} else {
+		defBase = '/';
+	}
+	return defBase;
+};
 
 var locationObj = M.parseLocation();
 var locationPath = locationObj.pathname;
@@ -34,9 +37,9 @@ var supportPushState = !!(history && history.pushState && history.replaceState &
 var supportHashChange = !!('onhashchange' in win);
 
 var MODE_MAP = {
-		hashbang: 1,
-		history: 2,
-		abstract: 3
+	hashbang: 1,
+	history: 2,
+	abstract: 3
 };
 
 var hashbangPrefix = '#!';
@@ -60,19 +63,15 @@ var History = {
 	preIndex: -1,
 
 	/*base path*/
-	base: defBase,
+	base: '/',
 
 	checkMode: function() {
-		if (this.options.hashbang) {
-			this.mode = MODE_MAP.hashbang;
-		} else if (this.options.history) {
-			this.mode = MODE_MAP.history;
-		} else if (this.options.abstract) {
-			this.mode = MODE_MAP.abstract;
-		} else {
-			// 默认 hashbang
-			this.mode = MODE_MAP.hashbang;
-		}
+		var that = this;
+		'abstract,history,hashbang'.replace(M.rword, function(mode) {
+			if (that.options[mode]) {
+				that.mode = MODE_MAP[mode];
+			}
+		});
 		if (this.mode === MODE_MAP.history && !this.supportPushState) {
 			// history 模式 但是不支持 pushstate
 			this.mode = MODE_MAP.hashbang;
@@ -93,6 +92,8 @@ var History = {
 		var base = options.base;
 		if (M.isDefined(base) && M.isString(base)) {
 			this.base = parseBasePath(base);
+		} else {
+			this.base = getDefBase();
 		}
 		this.startd = true;
 
