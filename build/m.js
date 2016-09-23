@@ -254,7 +254,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	};
 
 	var locationObj = M.parseLocation();
-	var locationPath = locationObj.pathname;
 	var locationOrigin = locationObj.origin;
 
 	var history = win.history;
@@ -332,8 +331,6 @@ return /******/ (function(modules) { // webpackBootstrap
 
 			// 检查设置的模式
 			this.checkMode();
-
-			this.pathExt = History.getPath(locationPath).slice(1);
 
 			// 根据模式做处理
 			if (this.mode !== MODE_MAP.abstract) {
@@ -435,7 +432,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		},
 
 		currentHref: function() {
-			return M.location.href.replace(History.pathExt, '').replace(hashbangPrefix + '/', '');
+			return M.location.href.replace(hashbangPrefix + '/', '');
 		},
 
 		/**
@@ -1730,7 +1727,7 @@ return /******/ (function(modules) { // webpackBootstrap
 			this._initEle(_pageViewEle);
 			var route = routeIns.route;
 			// 模板不一样 更新
-			if ((!routeIns.cached && !nowView) || template !== routeIns._oldTemplate) {
+			if (!routeIns.cached || template !== routeIns._oldTemplate) {
 				M.innerHTML(_pageViewEle, template);
 				routeIns.cached = false;
 			}
