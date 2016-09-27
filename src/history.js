@@ -220,8 +220,12 @@ var History = {
 				if (M.isUndefined(state.data.href)) {
 					hashCacheState = state;
 					// 更改hash后会自动触发hashchange事件
-					M.location.hash = hashbangPrefix + state.rpath;
-					return;
+					var newHash = hashbangPrefix + state.rpath;
+					if (newHash !== M.location.hash) {
+						// 不相等才会触发 hashchange
+						M.location.hash = newHash;
+						return;
+					}
 				}
 			} else {
 				M.isUndefined(state.data.href) && history[state.replace ? 'replaceState' : 'pushState'](state, state.title, state.url);
