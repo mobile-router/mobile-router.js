@@ -116,6 +116,30 @@ M.router.init([
 			]
 		}
 	},
+	{
+		path: '/d',
+		getTemplate: def.getTemplate,
+		onEnter: def.onEnter,
+		onLeave: def.onLeave,
+		callback: def.controller,
+		onDestroy: def.onDestroy,
+
+		children: {
+			viewsSelector: '.content',
+			cacheViewsNum: 1,
+			routes: [
+				{
+					// sub default route
+					path: '/',
+					getTemplate: defSub.getTemplate,
+					onEnter: defSub.onEnter,
+					onLeave: defSub.onLeave,
+					callback: defSub.controller,
+					onDestroy: defSub.onDestroy
+				}
+			]
+		}
+	},
 	{ // Nested routes & views! (1.5.0+)
 		path: '/b/:bid',
 		getTemplate: function(cb) {
@@ -269,7 +293,7 @@ The priority of get `animation`, `aniClass` or `cacheTemplate` config's value is
 
 * `index.html`: basic usage, `getTemplate` config, and `data-rel=back` attribute config on link element for reverse animation direction.
 
-* `index1.html`: `data-href` attribute config on link for disable `pushState`, and disable `animation` of one route.
+* `index1.html`: link element's `data-href` attribute config (as same as `abstract=true`) , and disable one route `animation`.
  
 * `index2.html`: disable `animation`.
 
@@ -281,7 +305,7 @@ The priority of get `animation`, `aniClass` or `cacheTemplate` config's value is
 
 * `index6.html`: set `cacheTemplate` of one route.
 
-* `index7.html`: set `M.history` config `enablePushState=false` for disable `pushState`.
+* `index7.html`: set `M.history` config `abstract=true`.
 
 * `index8.html`: nested routes and views.
 

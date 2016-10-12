@@ -117,6 +117,30 @@ M.router.init([
 		}
 	},
 	{
+		path: '/d',
+		getTemplate: def.getTemplate,
+		onEnter: def.onEnter,
+		onLeave: def.onLeave,
+		callback: def.controller,
+		onDestroy: def.onDestroy,
+
+		children: {
+			viewsSelector: '.content',
+			cacheViewsNum: 1,
+			routes: [
+				{
+					// sub default route
+					path: '/',
+					getTemplate: defSub.getTemplate,
+					onEnter: defSub.onEnter,
+					onLeave: defSub.onLeave,
+					callback: defSub.controller,
+					onDestroy: defSub.onDestroy
+				}
+			]
+		}
+	},
+	{
 		path: '/m/:paramName',
 		cacheTemplate: false, // 针对于当前的route，是否缓存模板
 		getTemplate: function(cb) {
@@ -282,7 +306,7 @@ M.history.start({
 
 * `index6.html`: 局部更改缓存模板的两种方式示例。
 
-* `index7.html`: `M.history`禁用掉pushstate示例。
+* `index7.html`: `M.history`的`abstract`模式。
 
 * `index8.html`: 嵌套路由视图示例。
 
