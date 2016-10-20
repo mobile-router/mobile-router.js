@@ -65,7 +65,7 @@
 		<li><a href="d/345" data-title="d">d</a></li>
 		<li><a href="e" data-title="e" data-rel="back">e</a></li>
 	</ul>
-	<div class="page-view"><div>/<p><a href="#link">link</a></p></div><h3 id="link">cc</h3></div>
+	<<!-- div class="page-view"><div>/<p><a href="#link">link</a></p></div><h3 id="link">cc</h3></div> -->
 	<script type="text/javascript" src="../build/m.js"></script>
 	<script type="text/javascript">
 		FastClick.attach(document.body);
@@ -159,10 +159,7 @@
 			// console.log('routeChangeEnd', arguments);
 		});
 
-		M.history.start({
-			// abstract: true,
-			history: true
-		});
+		M.history.start();
 		M.history.on('change', function(type, state, oldState) {
 			// console.log(type, state, oldState);
 		});

@@ -201,7 +201,11 @@ var History = {
 	},
 
 	currentHref: function() {
-		return M.location.href.replace(hashbangPrefix + '/', '');
+		if (this.mode === MODE_MAP.hashbang) {
+			// fix #27
+			return M.location.href.replace(M.location.search, '').replace(/\?(?=#|$)/, '').replace(hashbangPrefix + '/', '')
+		}
+		return M.location.href;
 	},
 
 	/**
