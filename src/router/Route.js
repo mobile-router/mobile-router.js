@@ -34,7 +34,7 @@ function Route(path, callback, opts) {
 
 	var redirectTo = this.redirectTo;
 	if (M.isString(redirectTo)) {
-		redirectTo = this.redirectTo = function() {
+		this.redirectTo = function() {
 			return redirectTo;
 		};
 	}
