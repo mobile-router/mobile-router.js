@@ -1154,7 +1154,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 		var redirectTo = this.redirectTo;
 		if (M.isString(redirectTo)) {
-			redirectTo = this.redirectTo = function() {
+			this.redirectTo = function() {
 				return redirectTo;
 			};
 		}
